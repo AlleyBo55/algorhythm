@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, memo } from 'react';
+import { useState, useEffect, memo } from 'react';
 import { useStreamingStore } from '@/hooks/useStreamingState';
 import {
   audioRouter,

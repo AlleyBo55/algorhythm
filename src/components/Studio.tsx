@@ -1,12 +1,12 @@
 'use client';
 
 import { memo, useState, Suspense, lazy } from 'react';
-import { DeckComponent } from './Deck';
-import { MixerComponent } from './Mixer';
-import { CodeEditorPanel } from './CodeEditor';
+import { Deck } from './deck';
+import { Mixer } from './mixer';
+import { CodeEditor } from './editor';
 import { cn } from './ui/Button';
 
-const Visualizer = lazy(() => import('./Visualizer').then(m => ({ default: m.Visualizer })));
+const Visualizer = lazy(() => import('./visualizers').then(m => ({ default: m.Visualizer })));
 
 type View = 'studio' | 'performance';
 
@@ -84,15 +84,15 @@ const StudioView = memo(function StudioView() {
   return (
     <div className="h-full grid grid-cols-12 gap-4">
       <div className="col-span-3 flex flex-col gap-4 min-h-0">
-        <DeckComponent id="A" />
-        <DeckComponent id="B" />
+        <Deck id="A" />
+        <Deck id="B" />
       </div>
-      <div className="col-span-6 min-h-0"><CodeEditorPanel /></div>
+      <div className="col-span-6 min-h-0"><CodeEditor /></div>
       <div className="col-span-3 flex flex-col gap-4 min-h-0">
         <div className="h-44 rounded-2xl overflow-hidden bg-zinc-900/50 border border-zinc-800/50 backdrop-blur-sm">
           <Suspense fallback={<VisualizerSkeleton />}><Visualizer /></Suspense>
         </div>
-        <div className="flex-1 min-h-0"><MixerComponent /></div>
+        <div className="flex-1 min-h-0"><Mixer /></div>
       </div>
     </div>
   );
@@ -101,9 +101,9 @@ const StudioView = memo(function StudioView() {
 const PerformanceView = memo(function PerformanceView() {
   return (
     <div className="h-full grid grid-cols-12 gap-4">
-      <div className="col-span-5 min-h-0"><DeckComponent id="A" expanded /></div>
-      <div className="col-span-2 min-h-0"><MixerComponent compact /></div>
-      <div className="col-span-5 min-h-0"><DeckComponent id="B" expanded /></div>
+      <div className="col-span-5 min-h-0"><Deck id="A" expanded /></div>
+      <div className="col-span-2 min-h-0"><Mixer compact /></div>
+      <div className="col-span-5 min-h-0"><Deck id="B" expanded /></div>
     </div>
   );
 });
