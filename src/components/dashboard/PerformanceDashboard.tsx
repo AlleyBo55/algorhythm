@@ -2,7 +2,7 @@
 
 import { memo, useState, useEffect } from 'react';
 import { performanceMonitor, PerformanceMetrics } from '@/lib/performanceMonitor';
-import { cn } from './ui/Button';
+import { cn } from '../ui/Button';
 
 export const PerformanceDashboard = memo(function PerformanceDashboard() {
   const [metrics, setMetrics] = useState<PerformanceMetrics>({

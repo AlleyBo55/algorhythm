@@ -1,5 +1,5 @@
 // Visualizer Components
-export { default as Visualizer } from '../Visualizer';
-export { default as WaveformVisualizer } from '../Effects/WaveformVisualizer';
-export { default as ThreeVisualizer } from '../Effects/ThreeVisualizer';
-export { default as CubeLoading } from '../Effects/CubeLoading';
+export { Visualizer } from './Visualizer';
+export { default as WaveformVisualizer } from './WaveformVisualizer';
+export { default as ThreeVisualizer } from './ThreeVisualizer';
+export { default as CubeLoading } from './CubeLoading';

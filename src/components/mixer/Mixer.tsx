@@ -2,11 +2,9 @@
 
 import { memo, useCallback, useState, useEffect } from 'react';
 import { dj } from '@/engine/djapi';
-import { cn } from './ui/Button';
+import { cn } from '../ui/Button';
 
-interface MixerProps {
-  compact?: boolean;
-}
+interface MixerProps { compact?: boolean; }
 
 export const MixerComponent = memo(function MixerComponent({ compact }: MixerProps) {
   const [crossfader, setCrossfader] = useState(0);
@@ -14,25 +12,16 @@ export const MixerComponent = memo(function MixerComponent({ compact }: MixerPro
   const [isRecording, setIsRecording] = useState(false);
   const [meterLevel, setMeterLevel] = useState(0);
 
-  // Animate meter based on master volume
   useEffect(() => {
     const interval = setInterval(() => {
       const base = ((masterVol + 60) / 72) * 100;
-      const variation = Math.random() * 15;
-      setMeterLevel(Math.min(100, base + variation));
+      setMeterLevel(Math.min(100, base + Math.random() * 15));
     }, 100);
     return () => clearInterval(interval);
   }, [masterVol]);
 
-  const handleCrossfader = useCallback((value: number) => {
-    setCrossfader(value);
-    try { dj.crossfader.position = value; } catch {}
-  }, []);
-
-  const handleMasterVolume = useCallback((value: number) => {
-    setMasterVol(value);
-    try { dj.master.volume = value; } catch {}
-  }, []);
+  const handleCrossfader = useCallback((value: number) => { setCrossfader(value); try { dj.crossfader.position = value; } catch {} }, []);
+  const handleMasterVolume = useCallback((value: number) => { setMasterVol(value); try { dj.master.volume = value; } catch {} }, []);
 
   if (compact) return <CompactMixer crossfader={crossfader} masterVol={masterVol} onCrossfader={handleCrossfader} onMasterVol={handleMasterVolume} />;
 
@@ -48,7 +37,6 @@ export const MixerComponent = memo(function MixerComponent({ compact }: MixerPro
     </div>
   );
 });
-
 
 const CompactMixer = memo(function CompactMixer({ crossfader, masterVol, onCrossfader, onMasterVol }: { crossfader: number; masterVol: number; onCrossfader: (v: number) => void; onMasterVol: (v: number) => void }) {
   return (
@@ -87,23 +75,17 @@ const CrossfaderSection = memo(function CrossfaderSection({ value, onChange }: {
         <div className="flex justify-between text-[10px] font-bold mb-3"><span className="text-cyan-400">DECK A</span><span className="text-amber-400">DECK B</span></div>
         <Slider value={value} min={-1} max={1} step={0.01} onChange={onChange} gradient large />
         <div className="flex justify-center gap-2 mt-4">
-          {['linear', 'power', 'constant'].map(curve => (
-            <button key={curve} onClick={() => { try { dj.crossfader.curve = curve as any; } catch {} }} className="px-3 py-1.5 text-[9px] uppercase tracking-wide text-zinc-500 hover:text-white hover:bg-zinc-800 rounded-lg transition-all border border-transparent hover:border-zinc-700">{curve}</button>
-          ))}
+          {['linear', 'power', 'constant'].map(curve => (<button key={curve} onClick={() => { try { dj.crossfader.curve = curve as any; } catch {} }} className="px-3 py-1.5 text-[9px] uppercase tracking-wide text-zinc-500 hover:text-white hover:bg-zinc-800 rounded-lg transition-all border border-transparent hover:border-zinc-700">{curve}</button>))}
         </div>
       </div>
     </section>
   );
 });
 
-
 const MasterSection = memo(function MasterSection({ value, onChange, meterLevel }: { value: number; onChange: (v: number) => void; meterLevel: number }) {
   return (
     <section className="space-y-3">
-      <div className="flex justify-between items-center">
-        <span className="text-xs font-medium text-zinc-400">Master Output</span>
-        <span className={cn("text-xs font-mono tabular-nums", value > 0 ? "text-red-400" : "text-zinc-500")}>{value > 0 ? '+' : ''}{value} dB</span>
-      </div>
+      <div className="flex justify-between items-center"><span className="text-xs font-medium text-zinc-400">Master Output</span><span className={cn("text-xs font-mono tabular-nums", value > 0 ? "text-red-400" : "text-zinc-500")}>{value > 0 ? '+' : ''}{value} dB</span></div>
       <div className="p-4 rounded-xl bg-zinc-950/50 border border-zinc-800/50 space-y-4">
         <Slider value={value} min={-60} max={12} onChange={onChange} />
         <div className="space-y-2">
@@ -122,10 +104,8 @@ const EffectsSection = memo(function EffectsSection() {
   const [reverb, setReverb] = useState(0);
   const [delay, setDelay] = useState(0);
   const [filter, setFilter] = useState(50);
-
   const handleReverb = useCallback((v: number) => { setReverb(v); try { dj.effects?.reverb?.set({ wet: v }); } catch {} }, []);
   const handleDelay = useCallback((v: number) => { setDelay(v); try { dj.effects?.delay?.set({ wet: v }); } catch {} }, []);
-
   return (
     <section className="space-y-3">
       <span className="text-xs font-medium text-zinc-400">Effects</span>
@@ -148,76 +128,30 @@ const EffectKnob = memo(function EffectKnob({ label, value, onChange, color }: {
   );
 });
 
-
 const RecordSection = memo(function RecordSection({ isRecording, setIsRecording }: { isRecording: boolean; setIsRecording: (v: boolean) => void }) {
   const handleRecord = useCallback(() => {
-    if (isRecording) {
-      try { dj.record?.stop(); } catch {}
-      setIsRecording(false);
-    } else {
-      try { dj.record?.start(); } catch {}
-      setIsRecording(true);
-    }
+    if (isRecording) { try { dj.record?.stop(); } catch {} setIsRecording(false); }
+    else { try { dj.record?.start(); } catch {} setIsRecording(true); }
   }, [isRecording, setIsRecording]);
-
   return (
     <section className="mt-auto pt-4 border-t border-zinc-800/50">
       <button onClick={handleRecord} className={cn("w-full h-12 rounded-xl font-medium text-sm flex items-center justify-center gap-3 transition-all", isRecording ? "bg-red-500/20 text-red-400 border border-red-500/30 shadow-lg shadow-red-500/10" : "bg-zinc-800/50 text-zinc-300 hover:bg-zinc-700/50 border border-zinc-700/50")}>
-        <div className="relative">
-          {isRecording && <div className="absolute inset-0 rounded-full bg-red-500 animate-ping opacity-75" />}
-          <div className={cn("w-3 h-3 rounded-full", isRecording ? "bg-red-500" : "bg-red-500/50")} />
-        </div>
+        <div className="relative">{isRecording && <div className="absolute inset-0 rounded-full bg-red-500 animate-ping opacity-75" />}<div className={cn("w-3 h-3 rounded-full", isRecording ? "bg-red-500" : "bg-red-500/50")} /></div>
         {isRecording ? 'Recording...' : 'Record Session'}
       </button>
     </section>
   );
 });
 
-// Custom Slider Component
 const Slider = memo(function Slider({ value, min, max, step = 1, onChange, gradient, large, color }: { value: number; min: number; max: number; step?: number; onChange: (v: number) => void; gradient?: boolean; large?: boolean; color?: 'cyan' | 'amber' | 'purple' }) {
   const percent = ((value - min) / (max - min)) * 100;
   const colorMap = { cyan: '#06b6d4', amber: '#f59e0b', purple: '#a855f7' };
   const trackColor = color ? colorMap[color] : gradient ? `linear-gradient(90deg, #06b6d4, #f59e0b)` : '#10b981';
-
   return (
     <div className="relative group">
-      <input
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        onChange={e => onChange(Number(e.target.value))}
-        className={cn("w-full appearance-none bg-transparent cursor-pointer", large ? "h-8" : "h-6")}
-        style={{
-          background: `linear-gradient(to right, ${typeof trackColor === 'string' && trackColor.startsWith('linear') ? '#10b981' : trackColor} 0%, ${typeof trackColor === 'string' && trackColor.startsWith('linear') ? '#10b981' : trackColor} ${percent}%, #27272a ${percent}%, #27272a 100%)`,
-          borderRadius: '9999px',
-          height: large ? '8px' : '6px',
-        }}
-      />
-      <style jsx>{`
-        input[type="range"]::-webkit-slider-thumb {
-          appearance: none;
-          width: ${large ? '20px' : '14px'};
-          height: ${large ? '20px' : '14px'};
-          border-radius: 50%;
-          background: white;
-          cursor: pointer;
-          box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-          transition: transform 0.15s ease;
-        }
-        input[type="range"]::-webkit-slider-thumb:hover {
-          transform: scale(1.15);
-        }
-        input[type="range"]::-moz-range-thumb {
-          width: ${large ? '20px' : '14px'};
-          height: ${large ? '20px' : '14px'};
-          border-radius: 50%;
-          background: white;
-          cursor: pointer;
-          border: none;
-        }
-      `}</style>
+      <input type="range" min={min} max={max} step={step} value={value} onChange={e => onChange(Number(e.target.value))} className={cn("w-full appearance-none bg-transparent cursor-pointer", large ? "h-8" : "h-6")}
+        style={{ background: `linear-gradient(to right, ${typeof trackColor === 'string' && trackColor.startsWith('linear') ? '#10b981' : trackColor} 0%, ${typeof trackColor === 'string' && trackColor.startsWith('linear') ? '#10b981' : trackColor} ${percent}%, #27272a ${percent}%, #27272a 100%)`, borderRadius: '9999px', height: large ? '8px' : '6px' }} />
+      <style jsx>{`input[type="range"]::-webkit-slider-thumb { appearance: none; width: ${large ? '20px' : '14px'}; height: ${large ? '20px' : '14px'}; border-radius: 50%; background: white; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.3); transition: transform 0.15s ease; } input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.15); } input[type="range"]::-moz-range-thumb { width: ${large ? '20px' : '14px'}; height: ${large ? '20px' : '14px'}; border-radius: 50%; background: white; cursor: pointer; border: none; }`}</style>
     </div>
   );
 });
