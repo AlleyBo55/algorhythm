@@ -20,6 +20,16 @@ export const DeckComponent = memo(function DeckComponent({ id, small }: DeckProp
   const [rotation, setRotation] = useState(0);
   const [isActive, setIsActive] = useState(true);
 
+  // EQ State syncing (local state for numeric inputs)
+  const [eq, setEq] = useState({ high: 0, mid: 0, low: 0 });
+
+  // Update deck EQ and local state
+  const handleEqChange = useCallback((band: 'high' | 'mid' | 'low', val: number) => {
+    const clamped = Math.max(-24, Math.min(12, val));
+    deck.eq[band] = clamped;
+    setEq(prev => ({ ...prev, [band]: clamped }));
+  }, [deck]);
+
   // Rotation animation
   useEffect(() => {
     let animationFrame: number;
@@ -56,7 +66,7 @@ export const DeckComponent = memo(function DeckComponent({ id, small }: DeckProp
       variant="glass"
       className={cn(
         "p-4 flex flex-col gap-3 relative overflow-hidden group transition-all duration-300",
-        small ? "h-48" : "h-[560px]",
+        small ? "h-48" : "h-[560px]", // Keep height for large decks
         !isActive && "opacity-50 grayscale pointer-events-none"
       )}
     >
@@ -78,10 +88,22 @@ export const DeckComponent = memo(function DeckComponent({ id, small }: DeckProp
 
           <div className="flex flex-col">
             <span className="text-xs font-mono text-muted-foreground uppercase tracking-widest">Deck {id}</span>
-            <span className="text-sm font-bold truncate max-w-[150px] text-white">{trackName}</span>
+            <span className="text-sm font-bold truncate max-w-[120px] text-white">{trackName}</span>
           </div>
         </div>
       </div>
+
+      {/* EQ Strip - Absolute Right (All Decks) */}
+      {trackName !== 'No Track Loaded' && (
+        <div className={cn(
+          "absolute right-2 z-40 flex bg-black/60 p-1.5 rounded-lg border border-white/10 shadow-2xl backdrop-blur-md transition-all duration-300 group-hover:translate-x-0 translate-x-1 opacity-80 group-hover:opacity-100",
+          small ? "top-2 gap-1" : "top-1/2 -translate-y-1/2 flex-col gap-4"
+        )}>
+          <EQControl label="H" value={eq.high} onChange={(v) => handleEqChange('high', v)} compact={small} />
+          <EQControl label="M" value={eq.mid} onChange={(v) => handleEqChange('mid', v)} compact={small} />
+          <EQControl label="L" value={eq.low} onChange={(v) => handleEqChange('low', v)} compact={small} />
+        </div>
+      )}
 
       {/* Main Visual Area */}
       {small && trackName === 'No Track Loaded' && (
@@ -126,18 +148,10 @@ export const DeckComponent = memo(function DeckComponent({ id, small }: DeckProp
               </Button>
             </div>
           )}
-
-          {trackName !== 'No Track Loaded' && (
-            <div className="absolute right-0 top-1/2 -translate-y-1/2 space-y-4 w-12 bg-black/50 p-2 rounded-lg backdrop-blur-sm border border-white/5 shadow-2xl z-20">
-              <VerticalFader label="H" onChange={(v) => deck.eq.high = v} />
-              <VerticalFader label="M" onChange={(v) => deck.eq.mid = v} />
-              <VerticalFader label="L" onChange={(v) => deck.eq.low = v} />
-            </div>
-          )}
         </div>
       )}
 
-      {/* Hidden File Input - Must be outside conditional to keep Ref active */}
+      {/* Hidden File Input */}
       <input
         ref={fileInputRef}
         type="file"
@@ -148,15 +162,6 @@ export const DeckComponent = memo(function DeckComponent({ id, small }: DeckProp
 
       {/* Spacer to push controls to bottom in small mode */}
       {small && trackName !== 'No Track Loaded' && <div className="flex-1" />}
-
-      {/* Hidden File Input - Must be outside conditional to keep Ref active */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="audio/*"
-        onChange={handleLoad}
-        className="hidden"
-      />
 
       {/* Controls Area */}
       {(!small || trackName !== 'No Track Loaded') && (
@@ -200,7 +205,7 @@ export const DeckComponent = memo(function DeckComponent({ id, small }: DeckProp
             </Button>
           </div>
 
-          {/* Sliders Area */}
+          {/* Sliders Area (Filter) */}
           {trackName !== 'No Track Loaded' && (
             <div className={cn(
               "flex-1 min-w-0",
@@ -242,20 +247,58 @@ export const DeckComponent = memo(function DeckComponent({ id, small }: DeckProp
   );
 });
 
-const VerticalFader = memo(function VerticalFader({ label, onChange }: { label: string; onChange: (v: number) => void }) {
+const EQControl = memo(function EQControl({
+  label,
+  value,
+  onChange,
+  compact
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+  compact?: boolean;
+}) {
   return (
-    <div className="flex flex-col items-center gap-2 h-24">
-      <span className="text-[9px] font-mono text-muted-foreground">{label}</span>
-      <div className="relative flex-1 w-1 bg-white/10 rounded-full group">
+    <div className={cn(
+      "flex items-center group",
+      compact ? "flex-col gap-0.5" : "flex-col gap-1.5"
+    )}>
+      <span className="text-[9px] font-bold text-muted-foreground group-hover:text-white transition-colors">{label}</span>
+      <div className="relative group/input">
         <input
-          type="range"
-          min="-24" max="12" step="0.1" defaultValue="0"
+          type="number"
+          min="-24"
+          max="12"
+          step="1"
+          value={value}
           onChange={(e) => onChange(Number(e.target.value))}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer appearance-none z-10"
-          style={{ writingMode: 'vertical-lr', direction: 'rtl' } as any}
+          className={cn(
+            "bg-zinc-900/50 border border-white/5 rounded text-[9px] text-center font-mono text-white focus:outline-none focus:border-primary/50 transition-all hover:bg-zinc-800 shadow-inner",
+            compact ? "w-7 h-6" : "w-10 h-8"
+          )}
         />
+        {/* Helper overlay for drag gesture simulation if needed, but standard input is what user asked for */}
       </div>
-      <input type="range" min="-24" max="12" defaultValue="0" onChange={(e) => onChange(Number(e.target.value))} className="w-16 -rotate-90 translate-y-4 origin-center bg-transparent appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-track]:bg-white/10" />
+
+      {/* Visual Meter Strip */}
+      <div className={cn(
+        "bg-white/5 rounded-full overflow-hidden relative border border-white/5",
+        compact ? "w-1 h-8" : "w-1.5 h-14"
+      )}>
+        <div
+          className={cn(
+            "absolute left-0 right-0 rounded-full transition-all duration-300",
+            value === 0 ? "bg-white/20" : value > 0 ? "bg-cyan-400" : "bg-red-400"
+          )}
+          style={{
+            height: `${Math.max(4, (Math.abs(value) / (value >= 0 ? 12 : 24)) * 100)}%`,
+            bottom: value >= 0 ? '50%' : 'auto',
+            top: value < 0 ? '50%' : 'auto'
+          }}
+        />
+        {/* Center line */}
+        <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-white/20" />
+      </div>
     </div>
   )
 })
