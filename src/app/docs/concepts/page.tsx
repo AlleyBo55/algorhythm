@@ -3,12 +3,12 @@ export default function ConceptsPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-4xl font-bold mb-4">Core Concepts</h1>
-        <p className="text-xl text-zinc-400">Understand the fundamentals of RhythmCode.</p>
+        <p className="text-xl text-zinc-400">Understand the fundamentals of Algorhythm.</p>
       </div>
 
       <Concept
         title="Audio Engine Architecture"
-        description="RhythmCode uses Tone.js (Web Audio API) for professional-grade audio processing"
+        description="Algorhythm uses Tone.js (Web Audio API) for professional-grade audio processing"
       >
         <div className="space-y-3">
           <Feature title="32-bit Float Processing">
@@ -32,7 +32,7 @@ export default function ConceptsPage() {
       >
         <div className="space-y-3">
           <p className="text-zinc-300">
-            RhythmCode uses Tone.js Transport for sample-accurate timing. All loops and events are scheduled ahead of time to prevent timing drift.
+            Algorhythm uses Tone.js Transport for sample-accurate timing. All loops and events are scheduled ahead of time to prevent timing drift.
           </p>
           <Code>{`// Time notation (Tone.js format)
 '4n'  // Quarter note (1 beat)
@@ -118,7 +118,7 @@ Deck D → Channel Fader D → EQ D → (No crossfader)
       >
         <div className="space-y-3">
           <p className="text-zinc-300">
-            When you load a track, RhythmCode automatically analyzes:
+            When you load a track, Algorhythm automatically analyzes:
           </p>
           <ul className="list-disc list-inside space-y-1 text-zinc-300 ml-4">
             <li><strong>BPM</strong> - Tempo detection using autocorrelation</li>
@@ -136,7 +136,7 @@ Deck D → Channel Fader D → EQ D → (No crossfader)
       >
         <div className="space-y-3">
           <p className="text-zinc-300">
-            RhythmCode uses the Camelot Wheel system for key compatibility:
+            Algorhythm uses the Camelot Wheel system for key compatibility:
           </p>
           <Code>{`// Compatible key combinations
 Same number: 5A + 5B (relative major/minor)

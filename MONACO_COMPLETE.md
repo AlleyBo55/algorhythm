@@ -180,7 +180,7 @@ editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => {
 ```typescript
 setInterval(() => {
   const code = editor.getValue();
-  localStorage.setItem('rhythmcode_saved_code', code);
+  localStorage.setItem('algorhythm_saved_code', code);
 }, 30000);
 ```
 

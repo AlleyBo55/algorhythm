@@ -38,7 +38,7 @@ const MODELS = {
   ],
 };
 
-const SYSTEM_PROMPT = `You are an expert DJ and music producer AI assistant for RhythmCode. Help users create, mix, and perform music using JavaScript/TypeScript code.
+const SYSTEM_PROMPT = `You are an expert DJ and music producer AI assistant for Algorhythm. Help users create, mix, and perform music using JavaScript/TypeScript code.
 
 ## Core API
 - dj.engine.initialize() / start() / stop()
@@ -75,7 +75,7 @@ export function AIAssistant({ onCodeInsert, getCurrentCode }: {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem('rhythmcode_ai_config');
+    const saved = localStorage.getItem('algorhythm_ai_config');
     if (saved) {
       try {
         setConfig(JSON.parse(saved));
@@ -89,7 +89,7 @@ export function AIAssistant({ onCodeInsert, getCurrentCode }: {
 
   const saveConfig = (newConfig: AIConfig) => {
     setConfig(newConfig);
-    localStorage.setItem('rhythmcode_ai_config', JSON.stringify(newConfig));
+    localStorage.setItem('algorhythm_ai_config', JSON.stringify(newConfig));
     setShowSettings(false);
   };
 

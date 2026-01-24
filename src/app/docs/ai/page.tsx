@@ -9,7 +9,7 @@ export default function AIPage() {
       <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 border border-purple-500/20 rounded-xl p-6">
         <h2 className="text-2xl font-bold mb-2">✨ AI-Powered DJ Coding</h2>
         <p className="text-zinc-300">
-          Get instant help creating beats, transitions, and effects. The AI understands the complete RhythmCode API.
+          Get instant help creating beats, transitions, and effects. The AI understands the complete Algorhythm API.
         </p>
       </div>
 

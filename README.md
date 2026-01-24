@@ -1,10 +1,10 @@
-# 🎧 RhythmCode
+# 🎧 Algorhythm
 
 > **"This is not just a DJ app. This is a new instrument. Where code meets creativity. Where algorithms meet artistry. Where anyone can create radio-ready music with the power of programming."**
 
 ## The World's First Code-Based Professional DJ Platform
 
-RhythmCode combines the power of professional DJ software (Pioneer CDJ, Serato) with the flexibility of studio DAWs (Ableton, FL Studio) - all controlled through code. Create, remix, and perform like never before.
+Algorhythm combines the power of professional DJ software (Pioneer CDJ, Serato) with the flexibility of studio DAWs (Ableton, FL Studio) - all controlled through code. Create, remix, and perform like never before.
 
 ### ✨ Features
 
@@ -120,7 +120,7 @@ Check out the built-in templates:
 - **Creative Coding**: Algorithmic music composition
 - **Collaboration**: Share and remix code with others
 
-## 🌟 Why RhythmCode?
+## 🌟 Why Algorhythm?
 
 ### Traditional DJ Software
 - ❌ Limited to hardware controls
@@ -128,7 +128,7 @@ Check out the built-in templates:
 - ❌ Hard to create complex patterns
 - ❌ Difficult to share techniques
 
-### RhythmCode
+### Algorhythm
 - ✅ Infinite creative possibilities with code
 - ✅ Automate complex transitions
 - ✅ Mathematical precision (perfect curves, timing)

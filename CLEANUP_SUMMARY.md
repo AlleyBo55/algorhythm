@@ -1,4 +1,4 @@
-# RhythmCode Cleanup Summary
+# Algorhythm Cleanup Summary
 
 ## 🗑️ Removed Zombie Code
 

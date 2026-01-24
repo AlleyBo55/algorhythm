@@ -73,7 +73,7 @@ const Header = memo(function Header() {
             </div>
             <div>
               <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                RhythmCode
+                Algorhythm
               </h1>
               <p className="text-xs text-zinc-400">Code-Based DJ Platform</p>
             </div>
@@ -101,7 +101,7 @@ const InitScreen = memo(function InitScreen({ onInit, isInitializing }: { onInit
           <span className="text-4xl">🎧</span>
         </div>
         <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
-          RhythmCode
+          Algorhythm
         </h1>
         <p className="text-zinc-400 mb-8">Code-Based DJ Platform</p>
         

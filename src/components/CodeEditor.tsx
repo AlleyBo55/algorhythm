@@ -24,7 +24,7 @@ export const CodeEditorPanel = memo(function CodeEditorPanel() {
     editorRef.current = editor;
     monacoRef.current = monaco;
 
-    // Register custom language features for RhythmCode
+    // Register custom language features for Algorhythm
     monaco.languages.registerCompletionItemProvider('typescript', {
       provideCompletionItems: (model, position) => {
         const suggestions: any[] = [
@@ -85,7 +85,7 @@ export const CodeEditorPanel = memo(function CodeEditorPanel() {
     });
 
     // Load saved code
-    const saved = localStorage.getItem('rhythmcode_saved_code');
+    const saved = localStorage.getItem('algorhythm_saved_code');
     if (saved && saved !== getStarterCode()) {
       setCode(saved);
     }
@@ -110,12 +110,12 @@ export const CodeEditorPanel = memo(function CodeEditorPanel() {
 
   const handleSave = useCallback(() => {
     const currentCode = editorRef.current?.getValue() || code;
-    localStorage.setItem('rhythmcode_saved_code', currentCode);
-    localStorage.setItem('rhythmcode_saved_timestamp', Date.now().toString());
+    localStorage.setItem('algorhythm_saved_code', currentCode);
+    localStorage.setItem('algorhythm_saved_timestamp', Date.now().toString());
   }, [code]);
 
   const handleLoad = useCallback(() => {
-    const saved = localStorage.getItem('rhythmcode_saved_code');
+    const saved = localStorage.getItem('algorhythm_saved_code');
     if (saved) {
       setCode(saved);
     }
@@ -134,7 +134,7 @@ export const CodeEditorPanel = memo(function CodeEditorPanel() {
     const interval = setInterval(() => {
       const currentCode = editorRef.current?.getValue();
       if (currentCode) {
-        localStorage.setItem('rhythmcode_saved_code', currentCode);
+        localStorage.setItem('algorhythm_saved_code', currentCode);
       }
     }, 30000);
     return () => clearInterval(interval);
@@ -365,7 +365,7 @@ const TemplateSelector = memo(function TemplateSelector({
 });
 
 function getStarterCode(): string {
-  return `// RhythmCode - Live DJ Performance
+  return `// Algorhythm - Live DJ Performance
 // Press Shift+Enter to run
 
 dj.bpm = 128;

@@ -1,6 +1,6 @@
 
 /**
- * TidalCycles-inspired Rhythm Parser for RhythmCode
+ * TidalCycles-inspired Rhythm Parser for Algorhythm
  * Allows expressing beats as space-separated strings with subdivisions in []
  * 
  * Example: "k s [k k] s" 

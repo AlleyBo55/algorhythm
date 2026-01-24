@@ -4,7 +4,7 @@ export default function DocsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-4xl font-bold mb-4">Getting Started with RhythmCode</h1>
+        <h1 className="text-4xl font-bold mb-4">Getting Started with Algorhythm</h1>
         <p className="text-xl text-zinc-400">
           The world's first code-based professional DJ platform. Mix like a pro, code like an artist.
         </p>
@@ -101,7 +101,7 @@ dj.loop('16n', (time) => {
           </Concept>
 
           <Concept title="Audio Quality">
-            <p>RhythmCode uses professional-grade audio processing:</p>
+            <p>Algorhythm uses professional-grade audio processing:</p>
             <ul className="list-disc list-inside space-y-1 text-zinc-300">
               <li>32-bit float precision</li>
               <li>48kHz sample rate</li>
