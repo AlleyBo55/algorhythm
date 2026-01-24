@@ -204,9 +204,10 @@ export class Runner {
         try {
             // merge existing dj context with new djAPI AND preserve getters (like .deck)
             // spreading { ...djAPI } fails for getters on the prototype.
-            // Solution: Use djAPI as the prototype.
-            const enhancedDJ = Object.create(djAPI);
-            Object.assign(enhancedDJ, dj);
+            // Using Object.assign(Object.create(djAPI), dj) fails if proto has same-named getters.
+            // Solution: Use dj as the base (own properties) and set djAPI as the prototype.
+            const enhancedDJ: any = { ...dj };
+            Object.setPrototypeOf(enhancedDJ, djAPI);
 
             // Expose aliases as top-level arguments for the user's function
             // This allows using A.play() instead of dj.A.play()
