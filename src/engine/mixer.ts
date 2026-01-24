@@ -4,33 +4,33 @@ export type CrossfaderCurve = 'linear' | 'power' | 'constant';
 
 export class Mixer {
   private static instance: Mixer | null = null;
-  
+
   public master!: Tone.Volume;
   public limiter!: Tone.Limiter;
   public crossfade!: Tone.CrossFade;
-  
+
   // Send/Return effects
   public reverbSend!: Tone.Reverb;
   public delaySend!: Tone.FeedbackDelay;
-  
+
   private _crossfaderPosition: number = 0.5;
   private _crossfaderCurve: CrossfaderCurve = 'constant';
   private initialized: boolean = false;
 
-  private constructor() {}
+  private constructor() { }
 
   public init(): void {
     if (this.initialized) return;
-    
+
     this.master = new Tone.Volume(0);
     this.limiter = new Tone.Limiter(-1);
     this.crossfade = new Tone.CrossFade(0.5);
     this.reverbSend = new Tone.Reverb({ decay: 2.5, wet: 1 });
     this.delaySend = new Tone.FeedbackDelay({ delayTime: '8n', feedback: 0.5, wet: 1 });
-    
+
     this.crossfade.chain(this.master, this.limiter, Tone.getDestination());
     this.reverbSend.generate();
-    
+
     this.initialized = true;
   }
 
@@ -44,7 +44,7 @@ export class Mixer {
   setCrossfaderPosition(position: number): void {
     // Clamp between 0 and 1
     this._crossfaderPosition = Math.max(0, Math.min(1, position));
-    
+
     // Apply curve
     const curved = this.applyCurve(this._crossfaderPosition);
     this.crossfade.fade.value = curved;
@@ -60,17 +60,17 @@ export class Mixer {
     switch (this._crossfaderCurve) {
       case 'linear':
         return position;
-      
+
       case 'power':
         // Sharp cut for scratching
-        return position < 0.5 
+        return position < 0.5
           ? Math.pow(position * 2, 3) / 2
           : 0.5 + Math.pow((position - 0.5) * 2, 3) / 2;
-      
+
       case 'constant':
         // Equal power crossfade
         return Math.sin(position * Math.PI / 2);
-      
+
       default:
         return position;
     }
@@ -81,11 +81,11 @@ export class Mixer {
   }
 
   enableLimiter(): void {
-    this.limiter.threshold = -1;
+    this.limiter.threshold.value = -1;
   }
 
   disableLimiter(): void {
-    this.limiter.threshold = 0;
+    this.limiter.threshold.value = 0;
   }
 
   // Send/Return controls

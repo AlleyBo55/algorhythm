@@ -1,3 +1,4 @@
+import { dj } from '@/engine/djapi';
 // Signature presets from world-class producers
 export interface Preset {
   id: string;
@@ -25,8 +26,8 @@ export const PRESETS: Preset[] = [
     artist: 'Marshmello',
     description: 'Bouncy bass, bright supersaws, happy vibes',
     apply: () => {
-      dj.bass.set({ oscillator: { type: 'sawtooth' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.3, release: 0.5 } });
-      dj.synth.set({ oscillator: { type: 'sawtooth', count: 7, spread: 40 } });
+      // dj.bass.set({ oscillator: { type: 'sawtooth' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.3, release: 0.5 } });
+      dj.synth.set({ oscillator: { type: 'fatsawtooth' } });
       dj.effects.chorus.set({ wet: 0.4, frequency: 1.5 });
     }
   },
@@ -47,7 +48,7 @@ export const PRESETS: Preset[] = [
     artist: 'Diplo',
     description: 'World music influences, horn stabs, dembow rhythm',
     apply: () => {
-      dj.brass.set({ oscillator: { type: 'sawtooth' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.5, release: 0.3 } });
+      // dj.brass.set({ oscillator: { type: 'sawtooth' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.5, release: 0.3 } });
       dj.effects.distortion.set({ wet: 0.3, distortion: 0.4 });
       dj.bpm = 98; // Moombahton tempo
     }
@@ -58,8 +59,8 @@ export const PRESETS: Preset[] = [
     artist: 'Sawano Hiroyuki',
     description: 'Orchestral + EDM, dramatic strings, cinematic',
     apply: () => {
-      dj.strings.set({ oscillator: { type: 'sawtooth' }, envelope: { attack: 0.3, decay: 0.5, sustain: 0.8, release: 1.5 } });
-      dj.brass.set({ oscillator: { type: 'square' }, envelope: { attack: 0.05, decay: 0.3, sustain: 0.7, release: 0.8 } });
+      // dj.strings.set({ oscillator: { type: 'sawtooth' }, envelope: { attack: 0.3, decay: 0.5, sustain: 0.8, release: 1.5 } });
+      // dj.brass.set({ oscillator: { type: 'square' }, envelope: { attack: 0.05, decay: 0.3, sustain: 0.7, release: 0.8 } });
       dj.effects.reverb.set({ wet: 0.5, decay: 5.0, preDelay: 0.05 });
     }
   },
@@ -70,7 +71,7 @@ export const PRESETS: Preset[] = [
     description: '80s nostalgia, driving bass, vintage synths',
     apply: () => {
       dj.synth.set({ oscillator: { type: 'sawtooth' }, envelope: { attack: 0.01, decay: 0.2, sustain: 0.5, release: 0.3 } });
-      dj.bass.set({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0.8, release: 0.5 } });
+      // dj.bass.set({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.3, sustain: 0.8, release: 0.5 } });
       dj.effects.chorus.set({ wet: 0.5, frequency: 0.5, depth: 0.8 });
       dj.bpm = 171; // Blinding Lights tempo
     }
@@ -81,7 +82,7 @@ export const PRESETS: Preset[] = [
     artist: 'Teddy Park',
     description: 'K-pop trap, Middle Eastern scales, powerful 808s',
     apply: () => {
-      dj.bass.set({ oscillator: { type: 'sine' }, envelope: { attack: 0.001, decay: 0.5, sustain: 0, release: 0.5 } });
+      // dj.bass.set({ oscillator: { type: 'sine' }, envelope: { attack: 0.001, decay: 0.5, sustain: 0, release: 0.5 } });
       dj.synth.set({ oscillator: { type: 'square' }, envelope: { attack: 0.001, decay: 0.1, sustain: 0, release: 0.1 } });
       dj.effects.distortion.set({ wet: 0.4, distortion: 0.6 });
     }
@@ -92,8 +93,8 @@ export const PRESETS: Preset[] = [
     artist: 'Pitbull',
     description: 'Big room energy, Latin influences, club ready',
     apply: () => {
-      dj.kick.set({ envelope: { attack: 0.001, decay: 0.3, sustain: 0, release: 0.3 } });
-      dj.clap.set({ envelope: { attack: 0.001, decay: 0.1, sustain: 0, release: 0.1 } });
+      // dj.kick.set({ envelope: { attack: 0.001, decay: 0.3, sustain: 0, release: 0.3 } });
+      // dj.clap.set({ envelope: { attack: 0.001, decay: 0.1, sustain: 0, release: 0.1 } });
       dj.effects.reverb.set({ wet: 0.25, decay: 2.5 });
     }
   },

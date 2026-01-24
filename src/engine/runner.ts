@@ -38,11 +38,26 @@ interface DJContext {
     sub: Tone.MonoSynth;
 
     // Semantic Instruments
-    flute: Tone.Sampler;
-    trumpet: Tone.Sampler;
-    violin: Tone.Sampler;
+    flute: Tone.PolySynth;
+    trumpet: Tone.PolySynth;
+    violin: Tone.PolySynth;
     cymbal: Tone.Sampler;
     bass808: Tone.MembraneSynth;
+
+    // Decks
+    deck?: {
+        A: any;
+        B: any;
+        C: any;
+        D: any;
+    };
+
+    // Deck Aliases
+    A: any;
+    B: any;
+    C: any;
+    D: any;
+
     // Presets
     preset: PresetMap;
     // Utils
@@ -176,15 +191,27 @@ export class Runner {
 
             stop: () => {
                 audioEngine.stop();
-            }
+            },
+
+            // Deck Aliases
+            get A() { return dj.deck!.A; },
+            get B() { return dj.deck!.B; },
+            get C() { return dj.deck!.C; },
+            get D() { return dj.deck!.D; }
         };
 
         // 3. Execute Code safely
         try {
-            // Merge existing dj context with new djAPI
-            const enhancedDJ = { ...dj, ...djAPI };
-            const runFn = new Function('dj', code);
-            runFn(enhancedDJ);
+            // merge existing dj context with new djAPI AND preserve getters (like .deck)
+            // spreading { ...djAPI } fails for getters on the prototype.
+            // Solution: Use djAPI as the prototype.
+            const enhancedDJ = Object.create(djAPI);
+            Object.assign(enhancedDJ, dj);
+
+            // Expose aliases as top-level arguments for the user's function
+            // This allows using A.play() instead of dj.A.play()
+            const runFn = new Function('dj', 'A', 'B', 'C', 'D', code);
+            runFn(enhancedDJ, enhancedDJ.A, enhancedDJ.B, enhancedDJ.C, enhancedDJ.D);
             console.log('✅ Code executed successfully');
         } catch (e: unknown) {
             const error = e instanceof Error ? e : new Error(String(e));

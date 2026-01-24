@@ -3,7 +3,12 @@ import { audioEngine } from './audio';
 import { mixer } from './mixer';
 import { recordingEngine } from './recorder';
 import { midiController } from './midi';
-import { getInstruments } from './instruments';
+import { getInstruments, getEffects } from './instruments';
+// ... (keep existing imports)
+
+
+
+// Crossfader
 import { BeatSync } from './sync';
 import { HarmonicMixing } from './harmonic';
 import { SampleDeck } from './sampler';
@@ -14,13 +19,13 @@ import { TemplateLibrary } from './templates';
 
 export class DJAPI {
   private static instance: DJAPI;
-  
+
   // Expose engines
   public engine = audioEngine;
   public mixer = mixer;
   public recorder = recordingEngine;
   public midi = midiController;
-  public sync!: BeatSync;
+  public beatSync!: BeatSync;
   public harmonic = HarmonicMixing;
   public sampler!: SampleDeck;
   public automation!: AutomationRecorder;
@@ -28,21 +33,21 @@ export class DJAPI {
   public cloud!: CloudStorage;
   public templates!: TemplateLibrary;
 
-  private constructor() {}
-  
+  private constructor() { }
+
   public init(): void {
-    this.sync = new BeatSync();
+    this.beatSync = new BeatSync();
     this.sampler = new SampleDeck(16);
     this.automation = new AutomationRecorder();
     this.stems = new StemSeparator(Tone.getContext().rawContext as AudioContext);
     this.cloud = new CloudStorage();
     this.templates = new TemplateLibrary();
-    
+
     ['A', 'B', 'C', 'D'].forEach(id => {
       const deck = audioEngine.getDeck(id);
-      if (deck) this.sync.addDeck(id, deck);
+      if (deck) this.beatSync.addDeck(id, deck);
     });
-    
+
     this.sampler.connect(mixer.master);
   }
 
@@ -78,6 +83,7 @@ export class DJAPI {
 
     return {
       // Playback
+      load: (file: File) => audioEngine.loadTrack(id, file),
       play: () => deck.play(),
       pause: () => deck.pause(),
       stop: () => deck.stop(),
@@ -99,16 +105,16 @@ export class DJAPI {
 
       // Filter
       filter: {
-        get cutoff() { return deck.filter.frequency.value; },
+        get cutoff() { return deck.filter.frequency.value as any; },
         set cutoff(freq: number) { deck.setFilterCutoff(freq); },
         get resonance() { return deck.filter.Q.value; },
         set resonance(q: number) { deck.setFilterResonance(q); },
-        get highpass() { return deck.filter.frequency.value; },
+        get highpass() { return deck.filter.frequency.value as any; },
         set highpass(freq: number) {
           deck.filter.type = 'highpass';
           deck.setFilterCutoff(freq);
         },
-        get lowpass() { return deck.filter.frequency.value; },
+        get lowpass() { return deck.filter.frequency.value as any; },
         set lowpass(freq: number) {
           deck.filter.type = 'lowpass';
           deck.setFilterCutoff(freq);
@@ -118,9 +124,10 @@ export class DJAPI {
       // Hot cues
       hotcue: new Proxy({}, {
         get: (target, prop) => {
-          const index = parseInt(prop as string);
+          if (typeof prop !== 'string') return undefined;
+          const index = parseInt(prop);
           if (isNaN(index)) return undefined;
-          
+
           return {
             set: (time: number, label?: string) => deck.setHotCue(index, time, label),
             trigger: () => deck.triggerHotCue(index),
@@ -169,12 +176,29 @@ export class DJAPI {
   get bass() { return getInstruments().bass; }
   get sub() { return getInstruments().sub; }
   get lead() { return getInstruments().lead; }
+  get synth() { return getInstruments().lead; } // Alias
   get pad() { return getInstruments().pad; }
   get strings() { return getInstruments().strings; }
   get piano() { return getInstruments().piano; }
   get arp() { return getInstruments().arp; }
   get pluck() { return getInstruments().pluck; }
   get fm() { return getInstruments().fm; }
+  get brass() { return getInstruments().trumpet; } // Alias
+
+  // Effects
+  get effects() {
+    const fx = getEffects();
+    return {
+      reverb: { set: (params: any) => fx.reverb?.set(params) },
+      delay: { set: (params: any) => fx.delay?.set(params) },
+      chorus: { set: (params: any) => fx.chorus?.set(params) },
+      filter: { set: (params: any) => { /* simplified */ } },
+      distortion: { set: (params: any) => { } },
+      pitchShift: { set: (params: any) => { } },
+      bitcrusher: { set: (params: any) => { } },
+      vocoder: { set: (params: any) => { } }
+    };
+  }
 
   // Crossfader
   get crossfader() {

@@ -14,7 +14,7 @@ export class RecordingEngine {
   private isRecording: boolean = false;
   private destination: MediaStreamAudioDestinationNode | null = null;
 
-  private constructor() {}
+  private constructor() { }
 
   public static getInstance(): RecordingEngine {
     if (!RecordingEngine.instance) {
@@ -28,10 +28,10 @@ export class RecordingEngine {
 
     try {
       const context = Tone.getContext();
-      
+
       // Create destination for recording
-      this.destination = context.rawContext.createMediaStreamDestination();
-      
+      this.destination = (context.rawContext as AudioContext).createMediaStreamDestination();
+
       // Connect master output to recording destination
       Tone.getDestination().connect(this.destination as any);
 
@@ -68,7 +68,7 @@ export class RecordingEngine {
       this.mediaRecorder!.onstop = () => {
         const blob = new Blob(this.recordedChunks, { type: 'audio/webm' });
         this.isRecording = false;
-        
+
         // Disconnect recording destination
         if (this.destination) {
           Tone.getDestination().disconnect(this.destination as any);
@@ -98,10 +98,10 @@ export class RecordingEngine {
   private exportWAV(audioBuffer: AudioBuffer, options: RecordingOptions): Blob {
     const bitDepth = options.bitDepth || 24;
     const sampleRate = options.sampleRate || audioBuffer.sampleRate;
-    
+
     // Resample if needed
-    const buffer = sampleRate === audioBuffer.sampleRate 
-      ? audioBuffer 
+    const buffer = sampleRate === audioBuffer.sampleRate
+      ? audioBuffer
       : this.resample(audioBuffer, sampleRate);
 
     const numberOfChannels = buffer.numberOfChannels;
@@ -130,7 +130,7 @@ export class RecordingEngine {
       for (let channel = 0; channel < numberOfChannels; channel++) {
         const sample = buffer.getChannelData(channel)[i];
         const value = Math.max(-1, Math.min(1, sample));
-        
+
         if (bitDepth === 16) {
           view.setInt16(offset, value * 0x7FFF, true);
           offset += 2;

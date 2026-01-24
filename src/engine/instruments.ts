@@ -23,9 +23,9 @@ export interface InstrumentMap {
     sub: Tone.MonoSynth;      // Sub bass
 
     // New Semantic Instruments
-    flute: Tone.Sampler;
-    trumpet: Tone.Sampler;
-    violin: Tone.Sampler;
+    flute: Tone.PolySynth;
+    trumpet: Tone.PolySynth;
+    violin: Tone.PolySynth;
     cymbal: Tone.Sampler;
     bass808: Tone.MembraneSynth;
 
@@ -371,63 +371,37 @@ export class DefaultInstruments {
             }).connect(masterGain),
 
             // === NEW SEMANTIC INSTRUMENTS ===
-            flute: new Tone.Sampler({
-                urls: {
-                    "A3": "A3.wav",
-                    "A4": "A4.wav",
-                    "A5": "A5.wav",
-                    "C3": "C3.wav",
-                    "C4": "C4.wav",
-                    "C5": "C5.wav",
-                    "E3": "E3.wav",
-                    "E4": "E4.wav",
-                    "E5": "E5.wav",
-                    "G3": "G3.wav",
-                    "G4": "G4.wav",
-                    "G5": "G5.wav"
+            flute: new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: 'sine' },
+                envelope: {
+                    attack: 0.1,
+                    decay: 0.1,
+                    sustain: 0.9,
+                    release: 1
                 },
-                baseUrl: "https://raw.githubusercontent.com/nbrosowsky/tonejs-instruments/master/samples/flute/",
                 volume: -6
             }).connect(reverb),
 
-            trumpet: new Tone.Sampler({
-                urls: {
-                    "A2": "A2.wav",
-                    "A3": "A3.wav",
-                    "A4": "A4.wav",
-                    "C3": "C3.wav",
-                    "C4": "C4.wav",
-                    "C5": "C5.wav",
-                    "D#3": "Ds3.wav",
-                    "D#4": "Ds4.wav",
-                    "F#2": "Fs2.wav",
-                    "F#3": "Fs3.wav",
-                    "F#4": "Fs4.wav"
+            trumpet: new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: 'triangle' },
+                envelope: {
+                    attack: 0.05,
+                    decay: 0.1,
+                    sustain: 0.7,
+                    release: 0.5
                 },
-                baseUrl: "https://raw.githubusercontent.com/nbrosowsky/tonejs-instruments/master/samples/trumpet/",
-                volume: -4
+                volume: -5
             }).connect(reverb),
 
-            violin: new Tone.Sampler({
-                urls: {
-                    "A3": "A3.wav",
-                    "A4": "A4.wav",
-                    "A5": "A5.wav",
-                    "A6": "A6.wav",
-                    "C4": "C4.wav",
-                    "C5": "C5.wav",
-                    "C6": "C6.wav",
-                    "C7": "C7.wav",
-                    "E4": "E4.wav",
-                    "E5": "E5.wav",
-                    "E6": "E6.wav",
-                    "G3": "G3.wav",
-                    "G4": "G4.wav",
-                    "G5": "G5.wav",
-                    "G6": "G6.wav"
+            violin: new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: 'sawtooth' },
+                envelope: {
+                    attack: 0.3,
+                    decay: 0.3,
+                    sustain: 0.8,
+                    release: 1.5
                 },
-                baseUrl: "https://raw.githubusercontent.com/nbrosowsky/tonejs-instruments/master/samples/violin/",
-                volume: -5
+                volume: -6
             }).connect(longReverb),
 
             cymbal: new Tone.Sampler({
@@ -468,4 +442,16 @@ export const getInstruments = () => {
         instrumentsInstance = new DefaultInstruments().all;
     }
     return instrumentsInstance;
+};
+
+export const getEffects = () => {
+    if (!effectsInitialized) {
+        initEffects();
+    }
+    return {
+        reverb: reverb,
+        delay: delay,
+        chorus: chorus,
+        filter: masterEQ // Mapping EQ to 'filter' for basic usage, though it's EQ
+    };
 };

@@ -10,6 +10,7 @@ export interface AutomationClip {
   duration: number;
 }
 
+import * as Tone from 'tone';
 export class AutomationRecorder {
   private clips: Map<string, AutomationClip> = new Map();
   private recording: Map<string, AutomationPoint[]> = new Map();
@@ -25,7 +26,7 @@ export class AutomationRecorder {
 
   stopRecording(): void {
     this.isRecording = false;
-    
+
     this.recording.forEach((points, param) => {
       const duration = points[points.length - 1]?.time || 0;
       this.clips.set(param, {
@@ -44,7 +45,7 @@ export class AutomationRecorder {
     if (!this.isRecording) return;
 
     const time = Tone.now() - this.startTime;
-    
+
     if (!this.recording.has(parameter)) {
       this.recording.set(parameter, []);
     }

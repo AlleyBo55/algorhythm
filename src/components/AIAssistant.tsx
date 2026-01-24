@@ -62,7 +62,7 @@ const SYSTEM_PROMPT = `You are an expert DJ and music producer AI assistant for 
 
 Generate working, production-ready code with comments.`;
 
-export function AIAssistant({ onCodeInsert, getCurrentCode }: { 
+export function AIAssistant({ onCodeInsert, getCurrentCode }: {
   onCodeInsert: (code: string) => void;
   getCurrentCode?: () => string;
 }) {
@@ -79,7 +79,7 @@ export function AIAssistant({ onCodeInsert, getCurrentCode }: {
     if (saved) {
       try {
         setConfig(JSON.parse(saved));
-      } catch {}
+      } catch { }
     }
   }, []);
 
@@ -103,7 +103,7 @@ export function AIAssistant({ onCodeInsert, getCurrentCode }: {
 
     try {
       // Include current editor context
-      const contextMessage = `Current code context:\n\`\`\`typescript\n${getCurrentCode()}\n\`\`\``;
+      const contextMessage = `Current code context:\n\`\`\`typescript\n${getCurrentCode ? getCurrentCode() : ''}\n\`\`\``;
       const response = await callAI(config, [...messages, { role: 'user', content: contextMessage + '\n\n' + input }]);
       setMessages(prev => [...prev, { role: 'assistant', content: response }]);
     } catch (error) {
@@ -127,7 +127,7 @@ export function AIAssistant({ onCodeInsert, getCurrentCode }: {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-br from-purple-600 to-blue-600 rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all hover:scale-110 z-50"
+        className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(99,102,241,0.5)] hover:shadow-[0_0_50px_rgba(99,102,241,0.7)] transition-all hover:scale-110 z-50 animate-pulse-soft"
       >
         <Sparkles className="w-6 h-6 text-white" />
       </button>
@@ -135,23 +135,28 @@ export function AIAssistant({ onCodeInsert, getCurrentCode }: {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 w-96 h-[600px] bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl flex flex-col z-50">
+    <div className="fixed bottom-6 right-6 w-[400px] h-[650px] bg-black/80 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl flex flex-col z-50 overflow-hidden transform transition-all duration-300 animate-slide-up">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-zinc-800">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-5 h-5 text-purple-400" />
-          <span className="font-semibold">AI Assistant</span>
+      <div className="flex items-center justify-between p-4 border-b border-white/5 bg-gradient-to-r from-indigo-500/10 to-purple-500/10">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-indigo-500/20 rounded-lg">
+            <Sparkles className="w-4 h-4 text-indigo-400" />
+          </div>
+          <div>
+            <span className="font-bold text-sm block">AI Copilot</span>
+            <span className="text-[10px] text-muted-foreground uppercase tracking-wider block">{config?.model || 'Offline'}</span>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <button
             onClick={() => setShowSettings(true)}
-            className="p-2 hover:bg-zinc-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors text-muted-foreground hover:text-white"
           >
             <Settings className="w-4 h-4" />
           </button>
           <button
             onClick={() => setIsOpen(false)}
-            className="p-2 hover:bg-zinc-800 rounded-lg transition-colors"
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors text-muted-foreground hover:text-white"
           >
             <X className="w-4 h-4" />
           </button>
@@ -168,32 +173,40 @@ export function AIAssistant({ onCodeInsert, getCurrentCode }: {
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth">
         {!config && (
-          <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 text-sm">
-            <div className="flex gap-2">
-              <AlertCircle className="w-5 h-5 text-yellow-400 shrink-0" />
+          <div className="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 rounded-xl p-5 text-sm backdrop-blur-sm">
+            <div className="flex gap-3">
+              <div className="p-2 bg-yellow-500/20 rounded-full h-fit">
+                <AlertCircle className="w-5 h-5 text-yellow-400" />
+              </div>
               <div>
-                <p className="font-semibold text-yellow-400 mb-1">Setup Required</p>
-                <p className="text-zinc-300">Click the settings icon to configure your AI provider.</p>
+                <p className="font-bold text-yellow-400 mb-1">Setup Required</p>
+                <p className="text-zinc-300 leading-relaxed">Configure your AI provider to start generating code.</p>
+                <button
+                  onClick={() => setShowSettings(true)}
+                  className="mt-3 text-xs font-bold uppercase tracking-wider text-yellow-500 hover:text-yellow-400 border-b border-yellow-500/30 hover:border-yellow-400"
+                >
+                  Open Settings →
+                </button>
               </div>
             </div>
           </div>
         )}
 
         {messages.map((msg, i) => (
-          <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[80%] rounded-lg p-3 ${
-              msg.role === 'user'
-                ? 'bg-blue-600 text-white'
-                : 'bg-zinc-800 text-zinc-100'
-            }`}>
-              <div className="text-sm whitespace-pre-wrap">{msg.content}</div>
+          <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} animate-fade-in`}>
+            <div className={`max-w-[85%] rounded-2xl p-4 shadow-sm ${msg.role === 'user'
+              ? 'bg-gradient-to-br from-indigo-600 to-purple-600 text-white rounded-br-none shadow-indigo-900/20'
+              : 'bg-white/5 border border-white/5 text-zinc-100 rounded-bl-none'
+              }`}>
+              <div className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</div>
               {msg.role === 'assistant' && msg.content.includes('```') && (
                 <button
                   onClick={() => extractAndInsertCode(msg.content)}
-                  className="mt-2 px-3 py-1 bg-purple-600 hover:bg-purple-700 rounded text-xs font-medium transition-colors"
+                  className="mt-3 w-full py-2 bg-white/5 hover:bg-white/10 border border-white/5 rounded-lg text-xs font-medium transition-colors flex items-center justify-center gap-2 group"
                 >
+                  <Sparkles className="w-3 h-3 text-indigo-400 group-hover:text-indigo-300" />
                   Insert Code
                 </button>
               )}
@@ -203,11 +216,11 @@ export function AIAssistant({ onCodeInsert, getCurrentCode }: {
 
         {isLoading && (
           <div className="flex justify-start">
-            <div className="bg-zinc-800 rounded-lg p-3">
+            <div className="bg-white/5 rounded-2xl rounded-bl-none p-4 w-16 flex items-center justify-center">
               <div className="flex gap-1">
-                <div className="w-2 h-2 bg-zinc-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                <div className="w-2 h-2 bg-zinc-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                <div className="w-2 h-2 bg-zinc-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
               </div>
             </div>
           </div>
@@ -217,23 +230,23 @@ export function AIAssistant({ onCodeInsert, getCurrentCode }: {
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-zinc-800">
-        <div className="flex gap-2">
+      <div className="p-4 border-t border-white/5 bg-black/40 backdrop-blur-md">
+        <div className="relative">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-            placeholder={config ? "Ask me anything..." : "Configure AI first..."}
+            placeholder={config ? "Ask AI to generate a beat..." : "Configure AI first..."}
             disabled={!config || isLoading}
-            className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-blue-500 disabled:opacity-50"
+            className="w-full bg-white/5 border border-white/10 rounded-xl pl-4 pr-12 py-3.5 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-indigo-500/50 focus:bg-white/10 transition-all disabled:opacity-50"
           />
           <button
             onClick={sendMessage}
             disabled={!config || !input.trim() || isLoading}
-            className="p-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="absolute right-2 top-2 p-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors disabled:opacity-0 disabled:scale-90 transform duration-200"
           >
-            <Send className="w-5 h-5" />
+            <Send className="w-4 h-4" />
           </button>
         </div>
       </div>
@@ -284,7 +297,7 @@ function SettingsModal({ currentConfig, onSave, onClose }: {
               className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-blue-500"
             >
               {availableModels.map((m) => (
-                <option key={m.id} value={m.id} disabled={m.disabled}>
+                <option key={m.id} value={m.id} disabled={(m as any).disabled}>
                   {m.name} {m.recommended ? '⭐' : ''}
                 </option>
               ))}

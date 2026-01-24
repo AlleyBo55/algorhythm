@@ -26,7 +26,7 @@ export const CodeEditorPanel = memo(function CodeEditorPanel() {
 
     // Register custom language features for Algorhythm
     monaco.languages.registerCompletionItemProvider('typescript', {
-      provideCompletionItems: (model, position) => {
+      provideCompletionItems: (model: any, position: any) => {
         const suggestions: any[] = [
           // DJ API completions
           {
@@ -77,7 +77,7 @@ export const CodeEditorPanel = memo(function CodeEditorPanel() {
 
     // Add keyboard shortcuts
     editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => {
-      handleRun();
+      handleRunAndNotify();
     });
 
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
@@ -95,13 +95,37 @@ export const CodeEditorPanel = memo(function CodeEditorPanel() {
     const currentCode = editorRef.current?.getValue() || code;
     try {
       setError(null);
-      const fn = new Function('dj', currentCode);
-      fn(dj);
+      const { runner } = require('@/engine/runner');
+      runner.execute(currentCode);
       setIsRunning(true);
-    } catch (err) {
-      setError((err as Error).message);
+    } catch (err: any) {
+      setError(err?.message || String(err));
     }
   }, [code]);
+
+  // Toast State
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'warning' } | null>(null);
+
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
+  // Extended Run Handler
+  const handleRunAndNotify = useCallback(() => {
+    handleRun();
+    if (!error) {
+      // Simple heuristic: check if any deck has a track
+      const hasTrack = dj.deck.A.duration > 0 || dj.deck.B.duration > 0;
+      if (hasTrack) {
+        setToast({ message: 'Code Executed Successfully', type: 'success' });
+      } else {
+        setToast({ message: 'Code Ran (Warning: No tracks loaded)', type: 'warning' });
+      }
+    }
+  }, [handleRun, error]);
 
   const handleStop = useCallback(() => {
     dj.stop();
@@ -141,107 +165,71 @@ export const CodeEditorPanel = memo(function CodeEditorPanel() {
   }, []);
 
   return (
-    <div className="code-editor bg-zinc-900 rounded-xl border border-zinc-800 flex flex-col h-full">
+    <div className="flex flex-col h-full bg-black/40 backdrop-blur-xl rounded-xl border border-white/5 overflow-hidden shadow-2xl">
       {/* Toolbar */}
-      <div className="flex items-center justify-between p-3 border-b border-zinc-800">
-        <div className="flex items-center gap-2">
-          <Code2 className="w-5 h-5 text-blue-400" />
-          <h3 className="text-sm font-bold text-white">Code Editor</h3>
+      <div className="flex items-center justify-between p-2 border-b border-white/5 bg-white/[0.02]">
+        <div className="flex items-center gap-3 px-2">
+          <div className="p-1.5 rounded-md bg-blue-500/10 text-blue-400">
+            <Code2 className="w-4 h-4" />
+          </div>
+          <span className="text-xs font-bold tracking-wider text-white/80 uppercase">Editor</span>
         </div>
-        
-        <div className="flex gap-2">
-          <button
-            onClick={() => editorRef.current?.trigger('keyboard', 'undo', null)}
-            className="p-2 hover:bg-zinc-800 rounded transition-colors"
-            title="Undo (Ctrl+Z)"
-          >
-            <Undo className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => editorRef.current?.trigger('keyboard', 'redo', null)}
-            className="p-2 hover:bg-zinc-800 rounded transition-colors"
-            title="Redo (Ctrl+Y)"
-          >
-            <Redo className="w-4 h-4" />
-          </button>
-          <button
-            onClick={handleFind}
-            className="p-2 hover:bg-zinc-800 rounded transition-colors"
-            title="Find (Ctrl+F)"
-          >
-            <Search className="w-4 h-4" />
-          </button>
-          <button
-            onClick={handleFormat}
-            className="p-2 hover:bg-zinc-800 rounded transition-colors"
-            title="Format Code"
-          >
-            <FileText className="w-4 h-4" />
-          </button>
-          <button
-            onClick={handleSave}
-            className="p-2 hover:bg-zinc-800 rounded transition-colors"
-            title="Save (Ctrl+S)"
-          >
-            <Save className="w-4 h-4" />
-          </button>
-          <button
-            onClick={handleLoad}
-            className="p-2 hover:bg-zinc-800 rounded transition-colors"
-            title="Load Saved"
-          >
-            <FolderOpen className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setShowSettings(!showSettings)}
-            className="p-2 hover:bg-zinc-800 rounded transition-colors"
-            title="Settings"
-          >
-            <Settings className="w-4 h-4" />
-          </button>
+
+        <div className="flex items-center gap-1">
+          <ToolbarButton onClick={() => editorRef.current?.trigger('keyboard', 'undo', null)} icon={Undo} tooltip="Undo" />
+          <ToolbarButton onClick={() => editorRef.current?.trigger('keyboard', 'redo', null)} icon={Redo} tooltip="Redo" />
+          <div className="w-px h-4 bg-white/10 mx-1" />
+          <ToolbarButton onClick={handleFind} icon={Search} tooltip="Find" />
+          <ToolbarButton onClick={handleFormat} icon={FileText} tooltip="Format" />
+          <div className="w-px h-4 bg-white/10 mx-1" />
+          <ToolbarButton onClick={handleSave} icon={Save} tooltip="Save" />
+          <ToolbarButton onClick={handleLoad} icon={FolderOpen} tooltip="Load" />
+          <ToolbarButton onClick={() => setShowSettings(!showSettings)} icon={Settings} tooltip="Settings" />
         </div>
       </div>
 
       {/* Settings Panel */}
       {showSettings && (
-        <div className="p-3 border-b border-zinc-800 bg-zinc-950 space-y-3">
-          <div className="flex items-center gap-4">
-            <label className="text-xs text-zinc-400 w-20">Font Size:</label>
-            <input
-              type="range"
-              min="10"
-              max="24"
-              value={fontSize}
-              onChange={(e) => setFontSize(Number(e.target.value))}
-              className="flex-1"
-            />
-            <span className="text-xs text-zinc-400 w-12">{fontSize}px</span>
+        <div className="p-4 border-b border-white/5 bg-black/60 space-y-4 animate-accordion-down">
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Font Size</label>
+            <div className="flex items-center gap-3">
+              <input
+                type="range"
+                min="10"
+                max="24"
+                value={fontSize}
+                onChange={(e) => setFontSize(Number(e.target.value))}
+                className="flex-1 h-1 bg-white/10 rounded-full appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary"
+              />
+              <span className="text-xs font-mono w-8 text-right text-white">{fontSize}px</span>
+            </div>
           </div>
-          <div className="flex items-center gap-4">
-            <label className="text-xs text-zinc-400 w-20">Theme:</label>
+          <div className="flex flex-col gap-1">
+            <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Theme</label>
             <select
               value={theme}
               onChange={(e) => setTheme(e.target.value as 'vs-dark' | 'light')}
-              className="flex-1 bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-xs"
+              className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-primary/50"
             >
-              <option value="vs-dark">Dark</option>
-              <option value="light">Light</option>
+              <option value="vs-dark">Dark Pro</option>
+              <option value="light">Light (Why?)</option>
             </select>
           </div>
-          <div className="flex items-center gap-4">
-            <label className="text-xs text-zinc-400 w-20">Minimap:</label>
+          <div className="flex items-center gap-2">
             <input
               type="checkbox"
               checked={minimap}
               onChange={(e) => setMinimap(e.target.checked)}
-              className="w-4 h-4"
+              className="rounded border-white/20 bg-white/5 text-primary focus:ring-primary/20"
             />
+            <label className="text-xs text-white">Show Minimap</label>
           </div>
         </div>
       )}
 
-      {/* Monaco Editor */}
-      <div className="flex-1 relative">
+      {/* Monaco Editor Wrapper */}
+      <div className="flex-1 relative bg-[#1e1e1e]/50 backdrop-blur-sm">
         <Editor
           height="100%"
           defaultLanguage="typescript"
@@ -255,16 +243,20 @@ export const CodeEditorPanel = memo(function CodeEditorPanel() {
             scrollBeyondLastLine: false,
             automaticLayout: true,
             tabSize: 2,
+            fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+            fontLigatures: true,
             wordWrap: 'on',
             lineNumbers: 'on',
-            renderLineHighlight: 'all',
+            renderLineHighlight: 'all', // 'line' | 'gutter' | 'none' | 'all'
             cursorBlinking: 'smooth',
             cursorSmoothCaretAnimation: 'on',
             smoothScrolling: true,
             folding: true,
-            foldingStrategy: 'indentation',
-            showFoldingControls: 'always',
-            bracketPairColorization: { enabled: true },
+            padding: { top: 16, bottom: 16 },
+            roundedSelection: true,
+            contextmenu: true,
+
+            // Visual tweaks to blend better
             guides: {
               bracketPairs: true,
               indentation: true,
@@ -285,59 +277,101 @@ export const CodeEditorPanel = memo(function CodeEditorPanel() {
         />
       </div>
 
-      {/* Error Display */}
-      {error && (
-        <div className="p-3 bg-red-900/20 border-t border-red-900/50">
-          <p className="text-red-400 text-xs font-mono">{error}</p>
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full border backdrop-blur-md shadow-xl z-50 animate-slide-up flex items-center gap-2 ${toast.type === 'success'
+          ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
+          : 'bg-amber-500/20 border-amber-500/50 text-amber-300'
+          }`}>
+          <div className={`w-2 h-2 rounded-full ${toast.type === 'success' ? 'bg-emerald-400' : 'bg-amber-400'} animate-pulse`} />
+          <span className="text-xs font-medium">{toast.message}</span>
         </div>
       )}
 
-      {/* Control Bar */}
-      <div className="flex items-center justify-between p-3 border-t border-zinc-800">
+      {/* Error Display */}
+      {error && (
+        <div className="p-3 bg-red-500/10 border-t border-red-500/20 backdrop-blur-md animate-slide-up">
+          <div className="flex items-start gap-2">
+            <span className="text-red-400 font-bold">⚠</span>
+            <p className="text-red-300 text-xs font-mono break-all">{error}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Bottom Control Bar */}
+      <div className="flex items-center justify-between p-3 border-t border-white/5 bg-black/40 backdrop-blur-md">
         <div className="flex gap-2">
           <button
-            onClick={handleRun}
+            onClick={handleRunAndNotify}
             disabled={isRunning}
-            className="px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-zinc-700 text-white rounded-lg transition-colors font-medium text-sm flex items-center gap-2"
+            className={`
+                group relative flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all duration-300
+                ${isRunning
+                ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
+                : 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white shadow-lg shadow-emerald-900/20 hover:shadow-emerald-900/40 hover:scale-[1.02] active:scale-[0.98]'}
+            `}
           >
-            <Play className="w-4 h-4" />
-            Run (Shift+Enter)
+            {isRunning ? (
+              <>
+                <div className="w-2 h-2 rounded-full bg-zinc-500" />
+                Running...
+              </>
+            ) : (
+              <>
+                <Play className="w-4 h-4 fill-current" />
+                Run Code
+                <span className="hidden opacity-50 text-[10px] font-normal group-hover:inline ml-1">(Shift+Enter)</span>
+              </>
+            )}
           </button>
+
           <button
             onClick={handleStop}
             disabled={!isRunning}
-            className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-zinc-700 text-white rounded-lg transition-colors font-medium text-sm flex items-center gap-2"
+            className={`
+                flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all
+                ${!isRunning
+                ? 'bg-transparent text-zinc-600 cursor-not-allowed'
+                : 'bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 border border-red-500/20'}
+            `}
           >
-            <Square className="w-4 h-4" />
+            <Square className="w-3 h-3 fill-current" />
             Stop
           </button>
         </div>
-        
-        <div className="flex items-center gap-4">
-          <div className="text-xs text-zinc-500">
-            {isRunning && <span className="text-green-400">● Running</span>}
-            {!isRunning && <span>Ready</span>}
-          </div>
-          <div className="text-xs text-zinc-500">
-            Line {editorRef.current?.getPosition()?.lineNumber || 1}, Col {editorRef.current?.getPosition()?.column || 1}
-          </div>
+
+        <div className="flex items-center gap-4 text-[10px] font-mono text-zinc-500">
+          {isRunning ? <span className="text-emerald-400 animate-pulse">● LIVE</span> : <span>○ READY</span>}
+          <div className="h-3 w-px bg-zinc-800" />
+          <span>Ln {editorRef.current?.getPosition()?.lineNumber || 1}, Col {editorRef.current?.getPosition()?.column || 1}</span>
         </div>
       </div>
 
       <TemplateSelector onSelect={setCode} />
-      
-      <AIAssistant 
-        onCodeInsert={(newCode) => setCode(newCode)} 
+
+      <AIAssistant
+        onCodeInsert={(newCode) => setCode(newCode)}
         getCurrentCode={() => editorRef.current?.getValue() || code}
       />
     </div>
   );
 });
 
-const TemplateSelector = memo(function TemplateSelector({ 
-  onSelect 
-}: { 
-  onSelect: (code: string) => void 
+const ToolbarButton = ({ onClick, icon: Icon, tooltip }: { onClick: () => void, icon: any, tooltip: string }) => (
+  <button
+    onClick={onClick}
+    className="p-2 text-zinc-400 hover:text-white hover:bg-white/5 rounded-md transition-colors relative group"
+    title={tooltip}
+  >
+    <Icon className="w-4 h-4" />
+  </button>
+)
+
+
+const TemplateSelector = memo(function TemplateSelector({
+  onSelect
+}: {
+  onSelect: (code: string) => void
 }) {
   const templates = [
     { name: 'Starter', code: getStarterCode() },

@@ -34,7 +34,7 @@ export class Effect {
       case 'chorus':
         return new Tone.Chorus({ frequency: 1.5, delayTime: 3.5, depth: 0.7, wet: 0 });
       case 'bitcrusher':
-        return new Tone.BitCrusher({ bits: 4, wet: 0 });
+        return new Tone.BitCrusher({ bits: 4 });
       case 'autofilter':
         return new Tone.AutoFilter({ frequency: '4n', type: 'sine', depth: 1, baseFrequency: 200, octaves: 2.6, wet: 0 });
       default:
@@ -107,7 +107,7 @@ export class EffectsRack {
 
     // Rebuild chain
     this.chain = Array.from(this.effects.values()).map(e => e.node);
-    
+
     if (this.chain.length === 0) {
       this.input.connect(this.output);
     } else {
@@ -153,7 +153,7 @@ export class ColorFX {
 
   set value(v: number) {
     this._value = Math.max(0, Math.min(1, v));
-    
+
     // Map 0-1 to multiple parameters
     this.filter.frequency.value = 20000 - (this._value * 19500); // 20kHz -> 500Hz
     this.reverb.wet.value = this._value * 0.5;

@@ -30,7 +30,7 @@ export class AudioEngine {
 
         // Initialize mixer first
         mixer.init();
-        
+
         // Create decks after Tone.start()
         this.decks = new Map();
         this.decks.set('A', new Deck('A'));
@@ -47,13 +47,13 @@ export class AudioEngine {
 
         // Set default BPM
         Tone.Transport.bpm.value = 120;
-        
+
         // Connect decks to mixer
         this.connectDecksToMixer();
-        
+
         this.initialized = true;
         console.log('🚀 Algorhythm: Ready');
-        
+
         return this.initialized;
     }
 
@@ -62,14 +62,14 @@ export class AudioEngine {
         const deckB = this.decks.get('B')!;
         const deckC = this.decks.get('C')!;
         const deckD = this.decks.get('D')!;
-        
+
         // Connect A and B to crossfader
-        deckA.filter.connect(mixer.crossfade.a);
-        deckB.filter.connect(mixer.crossfade.b);
-        
+        deckA.outputNode.connect(mixer.crossfade.a);
+        deckB.outputNode.connect(mixer.crossfade.b);
+
         // C and D go directly to master
-        deckC.filter.connect(mixer.master);
-        deckD.filter.connect(mixer.master);
+        deckC.outputNode.connect(mixer.master);
+        deckD.outputNode.connect(mixer.master);
     }
 
     public start() {
@@ -96,17 +96,17 @@ export class AudioEngine {
 
         // Load audio
         await deck.load(file);
-        
+
         // Analyze audio
         const arrayBuffer = await file.arrayBuffer();
         const audioBuffer = await Tone.getContext().decodeAudioData(arrayBuffer);
         const analysis = await audioAnalyzer.analyze(audioBuffer);
-        
+
         // Set deck properties
         deck.bpm = analysis.bpm;
         deck.key = analysis.key;
         deck.beatGrid = analysis.beats;
-        
+
         console.log(`✅ Deck ${deckId}: Loaded`);
         console.log(`   BPM: ${analysis.bpm}`);
         console.log(`   Key: ${analysis.key}`);
