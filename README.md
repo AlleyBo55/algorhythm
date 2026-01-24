@@ -1,36 +1,155 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🎧 RhythmCode
 
-## Getting Started
+> **"This is not just a DJ app. This is a new instrument. Where code meets creativity. Where algorithms meet artistry. Where anyone can create radio-ready music with the power of programming."**
 
-First, run the development server:
+## The World's First Code-Based Professional DJ Platform
+
+RhythmCode combines the power of professional DJ software (Pioneer CDJ, Serato) with the flexibility of studio DAWs (Ableton, FL Studio) - all controlled through code. Create, remix, and perform like never before.
+
+### ✨ Features
+
+- 🎛️ **4-Deck Professional Mixer** - Mix multiple tracks simultaneously
+- 🎵 **Auto BPM & Beat Detection** - Intelligent track analysis
+- 📊 **Professional Waveform Display** - Visual feedback with beat grids
+- 🎯 **8 Hot Cues per Deck** - Quick navigation and performance
+- 🎚️ **3-Band EQ (Isolator)** - Kill/boost frequencies like DJM mixers
+- ↔️ **Crossfader with Curves** - Smooth transitions or sharp cuts
+- 🔁 **Advanced Loop Controls** - Double, halve, shift loops on the fly
+- ⏱️ **Time Stretching** - Change tempo without changing pitch
+- 🎹 **Key Detection** - Harmonic mixing made easy
+- 🔄 **Beat Sync** - Auto-match BPM and phase
+- 📈 **Real-Time Spectrum Analyzer** - Visual frequency display
+- 🎙️ **Mix Recording & Export** - Radio-ready WAV/MP3 output
+- 🎮 **MIDI Controller Support** - Use your hardware DJ controller
+- 💿 **Vinyl Mode & Scratching** - Turntablism support
+- 🎨 **Color FX** - One-knob creative effects
+- 📝 **Live Code Editing** - Change parameters while playing
+- ☁️ **Cloud Save & Share** - Collaborate and share your mixes
+
+### 🎯 Quality Standards
+
+- **Audio Processing**: 32-bit float, 48kHz (Ableton/FL Studio grade)
+- **Latency**: <15ms (Pioneer CDJ grade)
+- **Effects**: Studio-quality DSP algorithms
+- **Export**: WAV 24-bit, MP3 320kbps (Radio-ready)
+
+## 🚀 Getting Started
+
+### Installation
+
+```bash
+npm install
+# or
+pnpm install
+```
+
+### Development
 
 ```bash
 npm run dev
 # or
-yarn dev
-# or
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to start DJing with code.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### First Mix
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. Click "INITIALIZE_SYSTEM" to start the audio engine
+2. Load a track into Deck A
+3. Write your first code:
 
-## Learn More
+```typescript
+dj.bpm = 128;
 
-To learn more about Next.js, take a look at the following resources:
+dj.loop('16n', (time) => {
+  const bar = Math.floor(tick / 16);
+  
+  // Play kick on every beat
+  if (tick % 4 === 0) {
+    dj.kick.triggerAttackRelease('C1', '8n', time);
+  }
+  
+  // Sweep filter over 8 bars
+  dj.deck.A.filter.cutoff = 500 + (bar % 8) * 1000;
+  
+  tick++;
+});
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+4. Press `SHIFT+ENTER` or click "RUN_EXEC"
+5. 🎉 You're DJing with code!
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📚 Documentation
 
-## Deploy on Vercel
+**[View Full Documentation →](/docs)**
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Complete documentation available at `/docs`:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **[Getting Started](/docs)** - Quick start guide
+- **[Core Concepts](/docs/concepts)** - Architecture & fundamentals
+- **[API Reference](/docs/api)** - Complete API documentation
+- **[DJ Techniques](/docs/techniques)** - Professional mixing techniques
+- **[Effects Guide](/docs/effects)** - Studio-quality effects
+- **[MIDI Setup](/docs/midi)** - Hardware controller integration
+- **[Examples](/docs/examples)** - 40+ production templates
+
+## 🎓 Learn by Example
+
+Check out the built-in templates:
+- Avicii-style progressive house
+- Marshmello future bass
+- Daft Punk French house
+- Synthwave retro vibes
+- And 40+ more!
+
+## 🛠️ Tech Stack
+
+- **Framework**: Next.js 16 + React 19
+- **Audio Engine**: Tone.js (Web Audio API)
+- **Code Editor**: Monaco Editor
+- **Waveforms**: WaveSurfer.js
+- **Analysis**: Essentia.js, Web Audio Beat Detector
+- **Time Stretching**: SoundTouch.js
+
+## 🎯 Use Cases
+
+- **Live Performance**: Code your DJ set in real-time
+- **Music Production**: Create unique remixes and edits
+- **Education**: Learn music theory through code
+- **Creative Coding**: Algorithmic music composition
+- **Collaboration**: Share and remix code with others
+
+## 🌟 Why RhythmCode?
+
+### Traditional DJ Software
+- ❌ Limited to hardware controls
+- ❌ Manual, repetitive tasks
+- ❌ Hard to create complex patterns
+- ❌ Difficult to share techniques
+
+### RhythmCode
+- ✅ Infinite creative possibilities with code
+- ✅ Automate complex transitions
+- ✅ Mathematical precision (perfect curves, timing)
+- ✅ Share code snippets and techniques
+- ✅ Works in browser (no installation)
+- ✅ Hardware MIDI support (best of both worlds)
+
+## 🤝 Contributing
+
+Contributions welcome! See [CONTRIBUTING.md](./CONTRIBUTING.md)
+
+## 📄 License
+
+MIT License - see [LICENSE](./LICENSE)
+
+## 🙏 Acknowledgments
+
+- Inspired by world-class DJs: Avicii, Alan Walker, Marshmello, Deadmau5
+- Built with love for the DJ and creative coding community
+- Powered by open-source audio technology
+
+---
+
+**Ready to revolutionize DJing?** Start coding your next hit! 🎵🚀
