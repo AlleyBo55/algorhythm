@@ -4,46 +4,66 @@ export const far_east_movement_like_a_g6: Template = {
   id: 'far_east_movement_like_a_g6',
   name: 'Like a G6',
   persona: 'Far East Movement',
-  description: 'Electro-pop with auto-tune vocals and club energy',
+  description: 'Electro-pop club anthem with signature synth hook',
   code: `// FAR EAST MOVEMENT - Like a G6
-// Signature: Electro-pop, auto-tune, club anthem
+// Electro-pop club anthem
 dj.bpm = 125;
 
-const synthLine = ['Bb4', 'C5', 'D5', 'F5', 'D5', 'C5', 'Bb4', 'A4'];
+// Transform loaded tracks
+if (dj.deck.A.duration > 0) {
+  dj.deck.A.bpm = 125;
+  dj.deck.A.effects.add('reverb', 'reverb');
+  const fx = dj.deck.A.effects.get('reverb');
+  if (fx) fx.wet = 0.2;
+}
+if (dj.deck.B.duration > 0) {
+  dj.deck.B.bpm = 125;
+  dj.deck.B.effects.add('reverb', 'reverb');
+  const fx = dj.deck.B.effects.get('reverb');
+  if (fx) fx.wet = 0.2;
+}
+
+// Iconic synth hook melody
+const hookMelody = ['Bb4', 'C5', 'D5', 'F5', 'D5', 'C5', 'Bb4', 'G4'];
+const bassline = ['Bb1', 'Bb1', 'G1', 'F1'];
+
 let tick = 0;
 
 dj.loop('16n', (time) => {
   const bar = Math.floor(tick / 16);
   const beat = tick % 16;
   
-  // Club kick pattern
-  if ([0, 4, 8, 12].includes(beat)) {
+  // Four-on-floor club kick
+  if (tick % 4 === 0) {
     dj.kick.triggerAttackRelease('C1', '8n', time);
   }
   
-  // Synth melody
+  // Iconic synth hook (plays throughout)
   if (tick % 2 === 0) {
-    const note = synthLine[(tick / 2) % 8];
-    dj.synth.triggerAttackRelease(note, '16n', time);
+    const note = hookMelody[(tick / 2) % 8];
+    dj.lead.triggerAttackRelease(note, '8n', time);
   }
   
-  // Claps on 2 and 4
-  if ([8].includes(beat)) {
+  // Pumping bassline
+  if (bar >= 4 && tick % 8 === 0) {
+    const note = bassline[Math.floor(tick / 8) % 4];
+    dj.bass.triggerAttackRelease(note, '4n', time);
+  }
+  
+  // Clap on 2 and 4
+  if (beat === 8) {
     dj.clap.triggerAttackRelease('C1', '16n', time);
   }
   
-  // Hi-hats
-  if (tick % 2 === 1) {
-    dj.hihat.triggerAttackRelease('C1', '32n', time);
+  // Open hi-hat pattern
+  if (tick % 4 === 2) {
+    dj.hihat.triggerAttackRelease('C1', '16n', time);
   }
   
-  // Bass hits
-  if ([0, 8].includes(beat)) {
-    dj.bass.triggerAttackRelease('Bb1', '4n', time);
+  // Build-up snare roll (bar 7)
+  if (bar === 7 && tick % 2 === 0) {
+    dj.snare.triggerAttackRelease('C1', '16n', time);
   }
-  
-  // Auto-tune effect
-  dj.effects.pitchShift.wet.value = 0.3;
   
   tick++;
 });`
@@ -56,6 +76,20 @@ export const far_east_movement_rocketeer: Template = {
   description: 'Emotional electro-pop with soaring synths',
   code: `// FAR EAST MOVEMENT - Rocketeer
 dj.bpm = 128;
+
+// Transform loaded tracks
+if (dj.deck.A.duration > 0) {
+  dj.deck.A.bpm = 125;
+  dj.deck.A.effects.add('reverb', 'reverb');
+  const fx = dj.deck.A.effects.get('reverb');
+  if (fx) fx.wet = 0.2;
+}
+if (dj.deck.B.duration > 0) {
+  dj.deck.B.bpm = 125;
+  dj.deck.B.effects.add('reverb', 'reverb');
+  const fx = dj.deck.B.effects.get('reverb');
+  if (fx) fx.wet = 0.2;
+}
 
 const emotionalChords = [
   ['F3', 'A3', 'C4'],   // F

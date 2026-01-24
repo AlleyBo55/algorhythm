@@ -43,6 +43,7 @@ let limiter: Tone.Limiter;
 let compressor: Tone.Compressor;
 let masterEQ: Tone.EQ3;
 let masterGain: Tone.Gain;
+let instrumentsGain: Tone.Gain; // Separate gain for instruments
 let masterSaturation: Tone.Chebyshev; // For analog warmth
 let sidechainBus: Tone.Gain; // Virtual bus for sidechaining
 
@@ -69,34 +70,37 @@ function initEffects() {
 
     // Main volume control - everything should eventually connect here
     masterGain = new Tone.Gain(0.8).connect(masterEQ);
+    
+    // Instruments gain (lower by default to not overshadow decks)
+    instrumentsGain = new Tone.Gain(0.3).connect(masterGain);
 
     // 2. SIDECHAIN BUS: Simulates pumping effect
     // Instruments connected here go through a gain stage we can duck
-    sidechainBus = new Tone.Gain(1).connect(masterGain);
+    sidechainBus = new Tone.Gain(1).connect(instrumentsGain);
 
     // 3. AUX EFFECTS
     reverb = new Tone.Reverb({
         decay: 1.5,
         wet: 0.2
-    }).connect(masterGain);
+    }).connect(instrumentsGain);
 
     longReverb = new Tone.Reverb({
         decay: 4,
         wet: 0.3
-    }).connect(masterGain);
+    }).connect(instrumentsGain);
 
     delay = new Tone.FeedbackDelay({
         delayTime: '8n',
         feedback: 0.3,
         wet: 0.2
-    }).connect(masterGain);
+    }).connect(instrumentsGain);
 
     chorus = new Tone.Chorus({
         frequency: 1.5,
         delayTime: 3.5,
         depth: 0.7,
         wet: 0.2
-    }).connect(masterGain);
+    }).connect(instrumentsGain);
     chorus.start();
 
     effectsInitialized = true;
@@ -116,7 +120,7 @@ export class DefaultInstruments {
                 },
                 baseUrl: "https://tonejs.github.io/audio/drum-samples/acoustic-kit/",
                 volume: 0
-            }).connect(masterGain),
+            }).connect(instrumentsGain),
 
             snare: new Tone.Sampler({
                 urls: {
@@ -132,7 +136,7 @@ export class DefaultInstruments {
                 },
                 baseUrl: "https://tonejs.github.io/audio/drum-samples/acoustic-kit/",
                 volume: -4
-            }).connect(masterGain),
+            }).connect(instrumentsGain),
 
             clap: new Tone.Sampler({
                 urls: {
@@ -180,7 +184,7 @@ export class DefaultInstruments {
                 },
                 baseUrl: "https://raw.githubusercontent.com/nbrosowsky/tonejs-instruments/master/samples/bass-electric/",
                 volume: 0
-            }).connect(masterGain),
+            }).connect(instrumentsGain),
 
             // === LEADS (Kept as Synth for Versatility, but upgraded) ===
             lead: new Tone.PolySynth(Tone.MonoSynth, {
@@ -368,7 +372,7 @@ export class DefaultInstruments {
                     octaves: 1
                 },
                 volume: 4
-            }).connect(masterGain),
+            }).connect(instrumentsGain),
 
             // === NEW SEMANTIC INSTRUMENTS ===
             flute: new Tone.PolySynth(Tone.Synth, {
@@ -410,7 +414,7 @@ export class DefaultInstruments {
                 },
                 baseUrl: "https://tonejs.github.io/audio/drum-samples/acoustic-kit/",
                 volume: -6
-            }).connect(masterGain),
+            }).connect(instrumentsGain),
 
             bass808: new Tone.MembraneSynth({
                 pitchDecay: 0.1,
@@ -418,7 +422,7 @@ export class DefaultInstruments {
                 oscillator: { type: 'sine' },
                 envelope: { attack: 0.001, decay: 0.8, sustain: 0.01, release: 1.2 },
                 volume: 6
-            }).connect(masterGain),
+            }).connect(instrumentsGain),
 
             // === EFFECTS BUS ===
             sidechain: sidechainBus
@@ -452,6 +456,7 @@ export const getEffects = () => {
         reverb: reverb,
         delay: delay,
         chorus: chorus,
-        filter: masterEQ // Mapping EQ to 'filter' for basic usage, though it's EQ
+        filter: masterEQ, // Mapping EQ to 'filter' for basic usage, though it's EQ
+        instrumentsGain: instrumentsGain // Expose for volume control
     };
 };

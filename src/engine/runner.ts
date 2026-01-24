@@ -4,7 +4,7 @@ import { createPresets, PresetMap } from './presets';
 import { sampleManager, SamplePlayOptions } from './samples';
 import { dj as djAPI } from './djapi';
 import * as Tone from 'tone';
-
+import { styleProcessor } from './styleProcessor';
 import { PatternParser } from './patternParser';
 
 // Structured error type for IDE-like error display
@@ -131,6 +131,9 @@ export class Runner {
                         const safeTime = Math.max(time, lastTime + 0.001);
                         lastTime = safeTime;
                         callback(safeTime);
+                        
+                        // Sync all active decks to current style
+                        styleProcessor.syncAllActiveDecks(audioEngine.decks);
                     } catch (e: unknown) {
                         const msg = e instanceof Error ? e.message : String(e);
                         if (!msg.includes('time')) console.error('Runtime error in loop:', e);
@@ -185,6 +188,12 @@ export class Runner {
             // Expose aliases as top-level arguments for the user's function
             const runFn = new Function('dj', 'A', 'B', 'C', 'D', code);
             runFn(enhancedDJ, enhancedDJ.A, enhancedDJ.B, enhancedDJ.C, enhancedDJ.D);
+            
+            // Start Transport if not already running
+            if (Tone.Transport.state !== 'started') {
+                audioEngine.start();
+                console.log('▶️ Transport started');
+            }
             console.log('✅ Code executed successfully');
         } catch (e: unknown) {
             const error = e instanceof Error ? e : new Error(String(e));

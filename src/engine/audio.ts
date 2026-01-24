@@ -3,6 +3,7 @@ import { getInstruments } from './instruments';
 import { Deck } from './deck';
 import { mixer } from './mixer';
 import { audioAnalyzer } from './analyzer';
+import { styleProcessor } from './styleProcessor';
 
 export class AudioEngine {
     private static instance: AudioEngine;
@@ -106,6 +107,9 @@ export class AudioEngine {
         deck.bpm = analysis.bpm;
         deck.key = analysis.key;
         deck.beatGrid = analysis.beats;
+
+        // Register as active deck
+        styleProcessor.registerActiveDeck(deckId);
 
         console.log(`✅ Deck ${deckId}: Loaded`);
         console.log(`   BPM: ${analysis.bpm}`);

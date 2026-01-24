@@ -36,6 +36,7 @@ export class Deck {
   public readonly spectrum: SpectrumAnalyzer;
   public readonly slip: SlipMode;
   public readonly quantize: Quantize;
+  private _pausedAt: number = 0;
 
   private _bpm: number = 120;
   private _key: string = '';
@@ -111,18 +112,30 @@ export class Deck {
   }
 
   play(): void {
-    if (this.player.buffer.loaded) {
-      this.player.start();
-    }
+    if (!this.player.buffer.loaded) return;
+    
+    if (this.player.state === 'started') return; // Already playing
+    
+    // Resume from paused position or start from beginning
+    this.player.start(undefined, this._pausedAt);
+    this._pausedAt = 0; // Clear pause position after resuming
   }
 
   pause(): void {
+    if (this.player.state !== 'started') return;
+    
+    // Calculate current position: how long it's been playing + where it started
+    const now = Tone.now();
+    const startTime = (this.player as any)._startTime || 0;
+    const offset = (this.player as any)._offset || 0;
+    this._pausedAt = offset + (now - startTime);
+    
     this.player.stop();
   }
 
   stop(): void {
     this.player.stop();
-    this.player.seek(0);
+    this._pausedAt = 0;
   }
 
   seek(time: number): void {
