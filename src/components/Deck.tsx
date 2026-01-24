@@ -148,45 +148,62 @@ export const DeckComponent = memo(function DeckComponent({ id, small }: DeckProp
 
       {/* Controls Area */}
       {(!small || trackName !== 'No Track Loaded') && (
-        <div className="space-y-3 z-30 bg-black/40 p-3 rounded-lg backdrop-blur-md border-t border-white/5 relative shrink-0">
+        <div className={cn(
+          "z-30 bg-black/40 p-3 rounded-lg backdrop-blur-md border-t border-white/5 relative shrink-0",
+          small ? "flex items-center gap-4" : "space-y-3"
+        )}>
 
-          <div className="flex items-center justify-center gap-4">
+          {/* Transport Controls */}
+          <div className={cn(
+            "flex items-center justify-center gap-2",
+            small ? "shrink-0" : "gap-4"
+          )}>
             <Button
               size="icon"
               variant={isPlaying ? "glow" : "secondary"}
               onClick={handlePlay}
-              className={cn("h-10 w-10 rounded-full transition-all", isPlaying ? "scale-110" : "")}
+              className={cn(
+                "rounded-full transition-all",
+                small ? "h-8 w-8" : "h-10 w-10",
+                isPlaying && !small ? "scale-110" : ""
+              )}
               title="Play"
               disabled={trackName === 'No Track Loaded'}
             >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+              <svg className={small ? "w-3 h-3" : "w-4 h-4"} fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
             </Button>
 
             <Button
               size="icon"
               variant="ghost"
               onClick={handlePause}
-              className="h-10 w-10 rounded-full border border-white/10 hover:bg-white/10"
+              className={cn(
+                "rounded-full border border-white/10 hover:bg-white/10",
+                small ? "h-8 w-8" : "h-10 w-10"
+              )}
               title="Pause"
               disabled={trackName === 'No Track Loaded'}
             >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
+              <svg className={small ? "w-3 h-3" : "w-4 h-4"} fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
             </Button>
           </div>
 
+          {/* Sliders Area */}
           {trackName !== 'No Track Loaded' && (
-            <div className="space-y-4">
+            <div className={cn(
+              "flex-1",
+              small ? "space-y-1" : "space-y-4"
+            )}>
               <div className="space-y-1">
-                <div className="flex justify-between text-[10px] text-muted-foreground font-mono uppercase">
+                <div className="flex justify-between text-[9px] text-muted-foreground font-mono uppercase">
                   <span>Filter</span>
-                  <span>{small ? 'Res' : 'Resonance'}</span>
                 </div>
                 <Slider
                   min="20"
                   max="20000"
                   defaultValue="20000"
                   onChange={(e) => deck.filter.cutoff = Number(e.target.value)}
-                  className="[&::-webkit-slider-thumb]:bg-white h-4"
+                  className="h-3 [&::-webkit-slider-thumb]:bg-white"
                 />
               </div>
 
@@ -198,10 +215,13 @@ export const DeckComponent = memo(function DeckComponent({ id, small }: DeckProp
             <Button
               variant="ghost"
               size="sm"
-              className="w-full text-[10px] h-7 opacity-50 hover:opacity-100"
+              className={cn(
+                "opacity-50 hover:opacity-100",
+                small ? "h-8 px-2 text-[9px]" : "w-full text-[10px] h-7"
+              )}
               onClick={() => fileInputRef.current?.click()}
             >
-              Change Track
+              {small ? 'Swap' : 'Change Track'}
             </Button>
           )}
         </div>
