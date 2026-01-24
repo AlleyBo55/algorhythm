@@ -33,7 +33,7 @@ export class MIDIController {
 
     try {
       this.midiAccess = await navigator.requestMIDIAccess();
-      
+
       // Setup inputs
       this.midiAccess.inputs.forEach((input) => {
         this.inputs.set(input.id, input);
@@ -55,7 +55,10 @@ export class MIDIController {
   }
 
   private handleMIDIMessage(event: MIDIMessageEvent): void {
-    const [status, data1, data2] = event.data;
+    if (!event.data) return;
+    const status = event.data[0];
+    const data1 = event.data[1];
+    const data2 = event.data[2];
     const type = status & 0xF0;
     const channel = status & 0x0F;
 
@@ -71,15 +74,15 @@ export class MIDIController {
           this.emit('noteoff', channel, data1);
         }
         break;
-      
+
       case 0x80: // Note Off
         this.emit('noteoff', channel, data1);
         break;
-      
+
       case 0xB0: // Control Change
         this.emit('cc', channel, data1, data2);
         break;
-      
+
       case 0xE0: // Pitch Bend
         const value = (data2 << 7) | data1;
         this.emit('pitchbend', channel, value - 8192);
@@ -118,7 +121,7 @@ export class MIDIController {
         break;
     }
 
-    const message = data2 !== undefined 
+    const message = data2 !== undefined
       ? [status, data1, data2]
       : [status, data1];
 
@@ -146,7 +149,7 @@ export class MIDIController {
     Object.entries(mapping).forEach(([key, handler]) => {
       // Parse key format: "cc:7" or "note:36"
       const [type, value] = key.split(':');
-      
+
       if (type === 'cc') {
         this.on('cc', (channel: number, cc: number, val: number) => {
           if (cc === parseInt(value)) {

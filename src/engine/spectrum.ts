@@ -16,7 +16,7 @@ export class SpectrumAnalyzer {
     this.analyser = audioContext.createAnalyser();
     this.analyser.fftSize = this._fftSize;
     this.analyser.smoothingTimeConstant = this._smoothing;
-    
+
     this.frequencyData = new Float32Array(this.analyser.frequencyBinCount);
     this.waveformData = new Float32Array(this.analyser.fftSize);
   }
@@ -26,8 +26,8 @@ export class SpectrumAnalyzer {
   }
 
   getData(): SpectrumData {
-    this.analyser.getFloatFrequencyData(this.frequencyData);
-    this.analyser.getFloatTimeDomainData(this.waveformData);
+    this.analyser.getFloatFrequencyData(this.frequencyData as any);
+    this.analyser.getFloatTimeDomainData(this.waveformData as any);
 
     // Calculate peak and RMS
     let peak = 0;
@@ -51,7 +51,7 @@ export class SpectrumAnalyzer {
 
   // Get frequency bands (bass, mid, high)
   getBands(): { bass: number; mid: number; high: number } {
-    this.analyser.getFloatFrequencyData(this.frequencyData);
+    this.analyser.getFloatFrequencyData(this.frequencyData as any);
 
     const nyquist = this.analyser.context.sampleRate / 2;
     const binCount = this.frequencyData.length;
@@ -65,7 +65,7 @@ export class SpectrumAnalyzer {
 
     for (let i = 0; i < binCount; i++) {
       const db = this.frequencyData[i];
-      
+
       if (i < bassEnd) {
         bass += db;
         bassCount++;
@@ -87,11 +87,11 @@ export class SpectrumAnalyzer {
 
   // Get specific frequency magnitude
   getFrequency(freq: number): number {
-    this.analyser.getFloatFrequencyData(this.frequencyData);
-    
+    this.analyser.getFloatFrequencyData(this.frequencyData as any);
+
     const nyquist = this.analyser.context.sampleRate / 2;
     const index = Math.floor((freq / nyquist) * this.frequencyData.length);
-    
+
     return this.dbToLinear(this.frequencyData[index]);
   }
 
@@ -109,7 +109,7 @@ export class SpectrumAnalyzer {
       console.warn(`Invalid FFT size: ${size}. Using 2048.`);
       size = 2048;
     }
-    
+
     this._fftSize = size;
     this.analyser.fftSize = size;
     this.frequencyData = new Float32Array(this.analyser.frequencyBinCount);

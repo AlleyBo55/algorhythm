@@ -36,7 +36,7 @@ export class Deck {
   public readonly spectrum: SpectrumAnalyzer;
   public readonly slip: SlipMode;
   public readonly quantize: Quantize;
-  
+
   private _bpm: number = 120;
   private _key: string = '';
   private _beatGrid: number[] = [];
@@ -47,11 +47,11 @@ export class Deck {
   constructor(id: string) {
     this.id = id;
     this.hotcues = new Map();
-    
+
     // Audio chain: Player → Volume → EQ → Filter → Effects → Spectrum → Master
-    this.player = new Tone.Player().sync();
+    this.player = new Tone.Player(); // Removed .sync() for immediate playback
     this.volume = new Tone.Volume(0);
-    
+
     // Phase 2: Advanced features
     this.effects = new EffectsRack();
     this.colorFX = new ColorFX();
@@ -61,17 +61,17 @@ export class Deck {
     this.spectrum = new SpectrumAnalyzer(Tone.getContext().rawContext as AudioContext);
     this.slip = new SlipMode(this.player);
     this.quantize = new Quantize();
-    
+
     // 3-band EQ (isolator style)
     this.eq = {
       high: new Tone.Filter({ type: 'highshelf', frequency: 2500, Q: 0.7 }),
       mid: new Tone.Filter({ type: 'peaking', frequency: 1000, Q: 0.7 }),
       low: new Tone.Filter({ type: 'lowshelf', frequency: 250, Q: 0.7 })
     };
-    
+
     // Main filter
     this.filter = new Tone.Filter({ type: 'lowpass', frequency: 20000, Q: 1 });
-    
+
     // Connect chain with Phase 2 features
     this.player.chain(
       this.volume,
@@ -82,14 +82,25 @@ export class Deck {
       this.effects.input
     );
     this.effects.output.connect(this.spectrum.node);
-    // Don't connect to destination yet - will be connected after init
+    // Spectrum is the final node before mixer
+    // toDestination handled by mixer
+  }
+
+  // Helper to get the final output node for the mixer to connect to
+  public get outputNode(): Tone.ToneAudioNode {
+    // spectrum.node is a native AnalyserNode. We need to wrap it or return a Tone node that connects to it.
+    // Ideally, we should have a final Tone.Gain node that connects to spectrum, and return THAT (or a parallel output).
+    // Let's return the effects.output directly. The spectrum sits in parallel or after?
+    // In constructor: this.effects.output.connect(this.spectrum.node);
+    // So effects.output IS the end of the Tone chain.
+    return this.effects.output;
   }
 
   async load(file: File | string): Promise<void> {
-    const buffer = typeof file === 'string' 
+    const buffer = typeof file === 'string'
       ? await Tone.Buffer.fromUrl(file)
       : await this.fileToBuffer(file);
-    
+
     this.player.buffer = buffer;
   }
 

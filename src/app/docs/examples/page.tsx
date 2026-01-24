@@ -168,7 +168,7 @@ dj.loop('16n', (time) => {
       </section>
 
       <section>
-        <h2 className="text-2xl font-bold mb-4">Drum & Bass</
+        <h2 className="text-2xl font-bold mb-4">Drum & Bass</h2>
         <div className="grid gap-4">
           <Template
             title="Liquid DnB"

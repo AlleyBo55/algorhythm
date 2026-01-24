@@ -1,95 +1,156 @@
 @import "tailwindcss";
 
-body {
-  background-color: #000;
-  color: #fff;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  font-feature-settings: "rlig" 1, "calt" 1;
+:root {
+  /* Base - Deep Zinc/Slate Tone */
+  --background: 240 10% 3.9%;
+  --foreground: 0 0% 98%;
+
+  /* Card / Surface - Glassy Layers */
+  --card: 240 10% 3.9%;
+  --card-foreground: 0 0% 98%;
+  --popover: 240 10% 3.9%;
+  --popover-foreground: 0 0% 98%;
+
+  /* Primary - Electric Indigo */
+  --primary: 252 87% 67%;
+  /* #a78bfa */
+  --primary-foreground: 210 40% 98%;
+
+  /* Secondary - Muted Cool Blue */
+  --secondary: 240 3.7% 15.9%;
+  --secondary-foreground: 0 0% 98%;
+
+  /* Muted - Subtle Text */
+  --muted: 240 3.7% 15.9%;
+  --muted-foreground: 240 5% 64.9%;
+
+  /* Accent - Neon Cyan/Teal for "Tech" feel */
+  --accent: 240 3.7% 15.9%;
+  --accent-foreground: 0 0% 98%;
+
+  /* Destructive */
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 98%;
+
+  /* Borders & Inputs */
+  --border: 240 3.7% 15.9%;
+  --input: 240 3.7% 15.9%;
+  --ring: 240 4.9% 83.9%;
+
+  /* Radius */
+  --radius: 0.75rem;
 }
 
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    background-image:
+      radial-gradient(circle at 50% 0%, rgba(120, 119, 198, 0.1) 0%, transparent 40%),
+      radial-gradient(circle at 0% 90%, rgba(56, 189, 248, 0.05) 0%, transparent 30%);
+    background-attachment: fixed;
+  }
+}
+
+@layer utilities {
+  .glass-panel {
+    @apply bg-white/[0.03] backdrop-blur-xl border-white/[0.06] border shadow-2xl;
+  }
+
+  .glass-button {
+    @apply bg-white/[0.05] hover:bg-white/[0.1] active:bg-white/[0.02] border border-white/[0.1] transition-all duration-300;
+  }
+
+  .text-glow {
+    text-shadow: 0 0 20px rgba(167, 139, 250, 0.5);
+  }
+}
+
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background-color: #18181b;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background-color: #3f3f46;
-  border-radius: 9999px;
+  @apply bg-white/10 rounded-full hover:bg-white/20 transition-colors;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background-color: #52525b;
+/* Animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
+@keyframes slide-up {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse-soft {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.5s ease-out;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 3s infinite ease-in-out;
+}
+
+/* Range Slider Reset */
 input[type="range"] {
-  appearance: none;
-  background: transparent;
-  cursor: pointer;
+  @apply appearance-none bg-transparent cursor-pointer;
 }
 
 input[type="range"]::-webkit-slider-track {
-  height: 0.5rem;
-  background-color: #3f3f46;
-  border-radius: 0.5rem;
+  height: 0.25rem;
+  background-color: hsl(var(--secondary));
+  border-radius: 9999px;
 }
 
 input[type="range"]::-webkit-slider-thumb {
-  appearance: none;
-  width: 1rem;
-  height: 1rem;
-  background-color: #fff;
-  border-radius: 9999px;
-  cursor: pointer;
-  margin-top: -4px;
+  @apply appearance-none w-3 h-3 rounded-full mt-[-4px];
+  background-color: hsl(var(--primary));
+  box-shadow: 0 0 10px rgba(167, 139, 250, 0.5);
+  transition: transform 0.1s;
 }
 
 input[type="range"]::-webkit-slider-thumb:hover {
-  transform: scale(1.1);
-}
-
-input[type="range"]::-moz-range-track {
-  height: 0.5rem;
-  background-color: #3f3f46;
-  border-radius: 0.5rem;
-}
-
-input[type="range"]::-moz-range-thumb {
-  width: 1rem;
-  height: 1rem;
-  background-color: #fff;
-  border-radius: 9999px;
-  cursor: pointer;
-  border: 0;
-}
-
-input[type="range"]::-moz-range-thumb:hover {
-  transform: scale(1.1);
-}
-
-@keyframes pulse-glow {
-  0%, 100% {
-    box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
-  }
-  50% {
-    box-shadow: 0 0 40px rgba(59, 130, 246, 0.8);
-  }
-}
-
-.recording {
-  animation: pulse-glow 2s ease-in-out infinite;
-}
-
-button:focus-visible,
-input:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px #000, 0 0 0 4px #3b82f6;
-}
-
-.text-balance {
-  text-wrap: balance;
+  transform: scale(1.5);
 }
