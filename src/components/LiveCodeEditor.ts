@@ -86,7 +86,7 @@ export class LiveCodeEditor {
   }
 
   private getStarterCode(): string {
-    return `// RhythmCode - Live DJ Performance
+    return `// Algorhythm - Live DJ Performance
 // Press SHIFT+ENTER to run
 
 dj.bpm = 128;
@@ -143,12 +143,12 @@ dj.loop('16n', (time) => {
   private save(): void {
     if (!this.editor) return;
     const code = this.editor.getValue();
-    localStorage.setItem('rhythmcode_session', code);
+    localStorage.setItem('algorhythm_session', code);
     console.log('💾 Code saved');
   }
 
   load(): void {
-    const saved = localStorage.getItem('rhythmcode_session');
+    const saved = localStorage.getItem('algorhythm_session');
     if (saved && this.editor) {
       this.editor.setValue(saved);
       console.log('📂 Code loaded');

@@ -52,7 +52,7 @@ export class AudioEngine {
         this.connectDecksToMixer();
         
         this.initialized = true;
-        console.log('🚀 RhythmCode: Ready');
+        console.log('🚀 Algorhythm: Ready');
         
         return this.initialized;
     }

@@ -199,7 +199,7 @@ function getSystemPrompt(djStyle: string): string {
 
 
 const BASE_SYSTEM_PROMPT = [
-  `You are a LEGENDARY Music Composer & Code DJ for the "RhythmCode" engine.`,
+  `You are a LEGENDARY Music Composer & Code DJ for the "Algorhythm" engine.`,
   `You are a virtuoso with perfect pitch and encyclopedic knowledge of EVERY genre—from Bach fugues to Sawano Hiroyuki anime drops, from Nujabes lo-fi to Skrillex bass design. You've studied Zimmer's orchestration, Daft Punk's vocoder magic, and the emotional gut-punches of Ghibli soundtracks.`,
   `Your code IS your instrument. You write elegant, rhythmic TypeScript that breathes and grooves. Every loop you create is a performance.`,
   `Your goal: generate BEAUTIFUL, EMOTIONAL, EXECUTABLE TypeScript code that uses the 'dj' object to create unforgettable music.`,
@@ -464,7 +464,7 @@ dj.loop('8n', (time) => {
     const genreContext = getGenreContext(prompt);
 
     // Detect if this is the first generation or adding to existing code
-    const isFirstGeneration = !context || context.trim() === '' || context.includes('// RhythmCode v1.0');
+    const isFirstGeneration = !context || context.trim() === '' || context.includes('// Algorhythm v1.0');
     let modeInstruction = '';
 
     if (isFirstGeneration) {

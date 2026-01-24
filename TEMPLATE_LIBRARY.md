@@ -1,8 +1,8 @@
-# 🎵 RhythmCode Template Library
+# 🎵 Algorhythm Template Library
 
 ## World-Class Producer Templates
 
-All templates created as if the actual artists were using RhythmCode to produce their signature sounds.
+All templates created as if the actual artists were using Algorhythm to produce their signature sounds.
 
 ### 🎧 Artists & Templates
 
@@ -172,4 +172,4 @@ Learn production techniques from:
 
 ---
 
-**All templates are production-ready and created with the same attention to detail as if the actual artists were using RhythmCode.**
+**All templates are production-ready and created with the same attention to detail as if the actual artists were using Algorhythm.**

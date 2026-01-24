@@ -3,7 +3,7 @@ export default function MIDIPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-4xl font-bold mb-4">MIDI Controller Setup</h1>
-        <p className="text-xl text-zinc-400">Use hardware DJ controllers with RhythmCode.</p>
+        <p className="text-xl text-zinc-400">Use hardware DJ controllers with Algorhythm.</p>
       </div>
 
       <section>
