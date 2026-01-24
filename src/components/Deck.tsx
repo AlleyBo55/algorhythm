@@ -146,16 +146,28 @@ export const DeckComponent = memo(function DeckComponent({ id, small }: DeckProp
         className="hidden"
       />
 
+      {/* Spacer to push controls to bottom in small mode */}
+      {small && trackName !== 'No Track Loaded' && <div className="flex-1" />}
+
+      {/* Hidden File Input - Must be outside conditional to keep Ref active */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="audio/*"
+        onChange={handleLoad}
+        className="hidden"
+      />
+
       {/* Controls Area */}
       {(!small || trackName !== 'No Track Loaded') && (
         <div className={cn(
-          "z-30 bg-black/40 p-3 rounded-lg backdrop-blur-md border-t border-white/5 relative shrink-0",
-          small ? "flex items-center gap-4" : "space-y-3"
+          "z-30 bg-black/60 p-2 rounded-lg backdrop-blur-md border border-white/5 relative shrink-0",
+          small ? "flex items-center gap-3" : "space-y-3 p-3"
         )}>
 
           {/* Transport Controls */}
           <div className={cn(
-            "flex items-center justify-center gap-2",
+            "flex items-center justify-center gap-1.5",
             small ? "shrink-0" : "gap-4"
           )}>
             <Button
@@ -164,7 +176,7 @@ export const DeckComponent = memo(function DeckComponent({ id, small }: DeckProp
               onClick={handlePlay}
               className={cn(
                 "rounded-full transition-all",
-                small ? "h-8 w-8" : "h-10 w-10",
+                small ? "h-7 w-7" : "h-10 w-10",
                 isPlaying && !small ? "scale-110" : ""
               )}
               title="Play"
@@ -179,7 +191,7 @@ export const DeckComponent = memo(function DeckComponent({ id, small }: DeckProp
               onClick={handlePause}
               className={cn(
                 "rounded-full border border-white/10 hover:bg-white/10",
-                small ? "h-8 w-8" : "h-10 w-10"
+                small ? "h-7 w-7" : "h-10 w-10"
               )}
               title="Pause"
               disabled={trackName === 'No Track Loaded'}
@@ -191,11 +203,11 @@ export const DeckComponent = memo(function DeckComponent({ id, small }: DeckProp
           {/* Sliders Area */}
           {trackName !== 'No Track Loaded' && (
             <div className={cn(
-              "flex-1",
-              small ? "space-y-1" : "space-y-4"
+              "flex-1 min-w-0",
+              small ? "space-y-0.5" : "space-y-4"
             )}>
               <div className="space-y-1">
-                <div className="flex justify-between text-[9px] text-muted-foreground font-mono uppercase">
+                <div className="flex justify-between text-[8px] text-muted-foreground font-mono uppercase">
                   <span>Filter</span>
                 </div>
                 <Slider
@@ -203,7 +215,7 @@ export const DeckComponent = memo(function DeckComponent({ id, small }: DeckProp
                   max="20000"
                   defaultValue="20000"
                   onChange={(e) => deck.filter.cutoff = Number(e.target.value)}
-                  className="h-3 [&::-webkit-slider-thumb]:bg-white"
+                  className="h-2 [&::-webkit-slider-thumb]:bg-white"
                 />
               </div>
 
@@ -216,8 +228,8 @@ export const DeckComponent = memo(function DeckComponent({ id, small }: DeckProp
               variant="ghost"
               size="sm"
               className={cn(
-                "opacity-50 hover:opacity-100",
-                small ? "h-8 px-2 text-[9px]" : "w-full text-[10px] h-7"
+                "opacity-50 hover:opacity-100 shrink-0",
+                small ? "h-7 px-1.5 text-[8px]" : "w-full text-[10px] h-7"
               )}
               onClick={() => fileInputRef.current?.click()}
             >
