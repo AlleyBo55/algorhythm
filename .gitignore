@@ -41,6 +41,11 @@ env.local
 *.tsbuildinfo
 next-env.d.ts
 
+# scripts (sample download scripts with credentials)
+/scripts/*.ts
+/scripts/*.js
+!/scripts/upload-local-samples.ts
+
 # AI assistants
 .antigravity
 .amazonq
