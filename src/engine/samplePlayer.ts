@@ -1,7 +1,7 @@
 import * as Tone from 'tone';
 import { LRUCache } from 'lru-cache';
 
-const R2_CDN = process.env.NEXT_PUBLIC_R2_CDN || 'https://samples.algorhythm.app';
+const R2_CDN = process.env.NEXT_PUBLIC_R2_CDN || 'https://pub-1bb3c1da6ec04255a43c86fb314974e5.r2.dev';
 
 interface SampleMetrics {
   hits: number;
