@@ -32,37 +32,36 @@ dj.loop('16n', (time) => {
     if (dist) dist.wet = 0.15;
   }
   
-  // === LAYERED INSTRUMENTS ===
+  // === LAYERED INSTRUMENTS (R2 SAMPLES) ===
   // Trap kick pattern
   if ([0, 6, 12].includes(beat)) {
-    dj.kick.triggerAttackRelease('C1', '8n', time);
+    dj.sample('drums/kick-13', time);
     dj.sidechain('8n');
   }
   
   // Snare on 2 and 4
   if (beat === 8) {
-    dj.snare.triggerAttackRelease('C1', '16n', time);
+    dj.sample('drums/snare-8', time);
   }
   
   // Middle Eastern melody
   if (bar >= 4 && tick % 2 === 0) {
-    const note = orientalScale[(tick / 2) % 8];
-    dj.synth.triggerAttackRelease(note, '16n', time);
+    dj.sample('synth/lead-9', time);
   }
   
   // Powerful 808 bass
   if ([0, 8].includes(beat)) {
-    dj.bass808.triggerAttackRelease('D1', '4n', time);
+    dj.sample('bass/808-2', time);
   }
   
   // Hi-hat rolls (signature)
   if (beat >= 14) {
-    dj.hihat.triggerAttackRelease('C1', '64n', time);
+    dj.sample('drums/hihat-13', time);
   }
   
   // Brass stabs
   if ([4, 12].includes(beat)) {
-    dj.brass.triggerAttackRelease('D3', '8n', time);
+    dj.sample('synth/brass-2', time);
   }
   
   tick++;
@@ -108,17 +107,16 @@ dj.loop('16n', (time) => {
     dj.deck.A.filter.cutoff = 500 + ((bar - 2) * 10000);
   }
   
-  // === LAYERED INSTRUMENTS ===
+  // === LAYERED INSTRUMENTS (R2 SAMPLES) ===
   // Build-up (bars 0-4)
   if (bar < 4) {
     if (beat === 0) {
-      const chord = chords[bar % 4];
-      dj.strings.triggerAttackRelease(chord, '1m', time);
+      dj.sample('synth/pad-7', time);
     }
     
     // Rising tension
     if (bar === 3) {
-      dj.snare.triggerAttackRelease('C1', '16n', time);
+      dj.sample('drums/snare-9', time);
     }
   }
   
@@ -126,23 +124,23 @@ dj.loop('16n', (time) => {
   if (bar >= 4) {
     // Powerful kick
     if ([0, 4, 8, 12].includes(beat)) {
-      dj.kick.triggerAttackRelease('C1', '8n', time);
+      dj.sample('drums/kick-14', time);
       dj.sidechain('8n');
     }
     
     // Synth lead
     if (tick % 4 === 0) {
-      dj.synth.triggerAttackRelease('Bb4', '8n', time);
+      dj.sample('synth/lead-10', time);
     }
     
     // 808 bass
     if ([0, 8].includes(beat)) {
-      dj.bass808.triggerAttackRelease('Bb1', '4n', time);
+      dj.sample('bass/808-3', time);
     }
     
     // Hi-hats
     if (tick % 2 === 1) {
-      dj.hihat.triggerAttackRelease('C1', '32n', time);
+      dj.sample('drums/hihat-14', time);
     }
   }
   

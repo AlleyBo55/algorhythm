@@ -30,43 +30,41 @@ dj.loop('16n', (time) => {
     if (rev) rev.wet = 0.25;
   }
   
-  // === LAYERED INSTRUMENTS ===
+  // === LAYERED INSTRUMENTS (R2 SAMPLES) ===
   // Bouncy kick pattern
   if (tick % 8 === 0 || tick % 8 === 6) {
-    dj.kick.triggerAttackRelease('C1', '8n', time);
+    dj.sample('drums/kick-3', time);
     dj.sidechain('8n');
   }
   
   // Snare on 2 and 4
   if (beat === 8) {
-    dj.snare.triggerAttackRelease('C1', '16n', time);
+    dj.sample('drums/snare-2', time);
   }
   
   // Bouncy bassline
   if (bar >= 8 && tick % 2 === 0) {
-    const note = bassline[(tick / 2) % 8];
-    dj.bass.triggerAttackRelease(note, '16n', time);
+    dj.sample('bass/synth-1', time);
   }
   
   // Vocal chops (signature)
   if ([0, 4, 8, 12].includes(beat)) {
-    const note = vocalPattern[beat / 4];
-    dj.pluck.triggerAttackRelease(note, '32n', time);
+    dj.sample('vocals/chops-2', time);
   }
   
   // Supersaw chords
   if (bar >= 8 && beat === 0) {
-    dj.synth.triggerAttackRelease(['E4', 'G#4', 'B4'], '2n', time);
+    dj.sample('synth/lead-2', time);
   }
   
   // Hi-hat rolls
   if (tick % 2 === 1) {
-    dj.hihat.triggerAttackRelease('C1', '32n', time);
+    dj.sample('drums/hihat-3', time);
   }
   
   // Claps for energy
   if (bar >= 8 && [8, 24].includes(beat)) {
-    dj.clap.triggerAttackRelease('C1', '16n', time);
+    dj.sample('drums/clap-2', time);
   }
   
   tick++;
@@ -113,34 +111,31 @@ dj.loop('16n', (time) => {
     if (del) del.wet = 0.15;
   }
   
-  // === LAYERED INSTRUMENTS ===
+  // === LAYERED INSTRUMENTS (R2 SAMPLES) ===
   // Emotional chord progression
   if (beat === 0) {
-    const chord = chords[bar % 4];
-    dj.pad.triggerAttackRelease(chord, '1m', time);
+    dj.sample('synth/pad-2', time);
   }
   
   // Kick pattern (drop)
   if (bar >= 8 && [0, 6, 12].includes(beat)) {
-    dj.kick.triggerAttackRelease('C1', '8n', time);
+    dj.sample('drums/kick-4', time);
     dj.sidechain('8n');
   }
   
   // Guitar-like plucks
   if (bar >= 8 && tick % 4 === 2) {
-    const note = guitarMelody[(tick / 4) % 8];
-    dj.pluck.triggerAttackRelease(note, '16n', time);
+    dj.sample('synth/pluck-2', time);
   }
   
   // Bass foundation
   if (bar >= 8 && tick % 8 === 0) {
-    const bassNotes = ['C2', 'G1', 'A1', 'F1'];
-    dj.bass.triggerAttackRelease(bassNotes[bar % 4], '4n', time);
+    dj.sample('bass/sub-2', time);
   }
   
   // Soft hi-hats
   if (bar >= 8 && tick % 4 === 2) {
-    dj.hihat.triggerAttackRelease('C1', '32n', time);
+    dj.sample('drums/hihat-4', time);
   }
   
   tick++;

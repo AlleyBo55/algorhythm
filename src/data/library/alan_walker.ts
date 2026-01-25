@@ -51,33 +51,31 @@ dj.loop('16n', (time) => {
     dj.deck.A.colorFX.value = progress * 0.5;
   }
   
-  // === LAYERED INSTRUMENTS ===
+  // === LAYERED INSTRUMENTS (R2 SAMPLES) ===
   // Kick pattern (drop) with sidechain
   if (bar >= 8 && tick % 4 === 0) {
-    dj.kick.triggerAttackRelease('C1', '8n', time);
+    dj.sample('drums/kick-1', time);
     dj.sidechain('8n');
   }
   
   // Signature pluck melody
   if (tick % 2 === 0) {
-    const note = melody[(tick / 2) % 8];
-    dj.synth.triggerAttackRelease(note, '8n', time);
+    dj.sample('synth/pluck-1', time);
   }
   
-  // Emotional chord progression
+  // Emotional pad progression
   if (beat === 0) {
-    const chord = chords[bar % 4];
-    dj.pad.triggerAttackRelease(chord, '1m', time);
+    dj.sample('synth/pad-1', time);
   }
   
   // Hi-hat pattern
   if (bar >= 8 && tick % 2 === 1) {
-    dj.hihat.triggerAttackRelease('C1', '32n', time);
+    dj.sample('drums/hihat-1', time);
   }
   
   // Clap on 2 and 4
   if (bar >= 8 && [8, 24].includes(beat)) {
-    dj.clap.triggerAttackRelease('C1', '16n', time);
+    dj.sample('drums/clap-1', time);
   }
   
   tick++;
@@ -113,28 +111,27 @@ dj.loop('16n', (time) => {
     if (cho) cho.wet = 0.3;
   }
   
-  // === LAYERED INSTRUMENTS ===
+  // === LAYERED INSTRUMENTS (R2 SAMPLES) ===
   if (bar >= 8) {
     // Kick with sidechain
     if (tick % 4 === 0) {
-      dj.kick.triggerAttackRelease('C1', '8n', time);
+      dj.sample('drums/kick-2', time);
       dj.sidechain('8n');
     }
     
     // Signature bass wobble
     if (tick % 8 === 0) {
-      dj.bass.triggerAttackRelease('F#1', '4n', time);
+      dj.sample('bass/sub-1', time);
     }
     
     // Vocal chops
     if ([0, 6, 12].includes(beat)) {
-      const note = vocalChops[beat / 6];
-      dj.pluck.triggerAttackRelease(note, '16n', time);
+      dj.sample('vocals/chops-1', time);
     }
     
     // Supersaw lead
     if (beat === 0) {
-      dj.synth.triggerAttackRelease(['F#4', 'A4', 'C#5'], '2n', time);
+      dj.sample('synth/lead-1', time);
     }
   }
   
@@ -142,7 +139,7 @@ dj.loop('16n', (time) => {
   if (bar >= 6 && bar < 8) {
     // Snare roll
     if (tick % 2 === 0) {
-      dj.snare.triggerAttackRelease('C1', '16n', time);
+      dj.sample('drums/snare-1', time);
     }
     // Filter sweep
     dj.deck.A.filter.cutoff = 500 + ((bar - 6) * 10000);
@@ -150,7 +147,7 @@ dj.loop('16n', (time) => {
   
   // Hi-hats throughout
   if (bar >= 8 && tick % 2 === 1) {
-    dj.hihat.triggerAttackRelease('C1', '32n', time);
+    dj.sample('drums/hihat-2', time);
   }
   
   tick++;

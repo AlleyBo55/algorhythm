@@ -34,37 +34,36 @@ dj.loop('16n', (time) => {
     if (rev) rev.wet = 0.6;
   }
   
-  // === LAYERED INSTRUMENTS ===
+  // === LAYERED INSTRUMENTS (R2 SAMPLES) ===
   // Epic orchestral chords
   if (beat === 0) {
-    const chord = epicChords[bar % 4];
-    dj.strings.triggerAttackRelease(chord, '1m', time);
+    dj.sample('synth/pad-8', time);
   }
   
   // Dramatic kick pattern
   if (bar >= 4 && [0, 4, 8, 12].includes(beat)) {
-    dj.kick.triggerAttackRelease('C1', '8n', time);
+    dj.sample('drums/kick-15', time);
     dj.sidechain('8n');
   }
   
   // Intense string ostinato
   if (bar >= 4 && tick % 2 === 0) {
-    dj.strings.triggerAttackRelease('E5', '32n', time);
+    dj.sample('synth/lead-11', time);
   }
   
   // Brass stabs
   if ([0, 8].includes(beat)) {
-    dj.brass.triggerAttackRelease(['E3', 'G3', 'B3'], '4n', time);
+    dj.sample('synth/brass-3', time);
   }
   
   // Taiko drums
   if (beat === 0 || beat === 8) {
-    dj.tom.triggerAttackRelease('C1', '8n', time);
+    dj.sample('drums/tom-1', time);
   }
   
   // Snare rolls
   if (bar >= 4 && beat === 8) {
-    dj.snare.triggerAttackRelease('C1', '16n', time);
+    dj.sample('drums/snare-10', time);
   }
   
   tick++;
@@ -109,11 +108,11 @@ dj.loop('16n', (time) => {
     dj.deck.A.filter.cutoff = wobble;
   }
   
-  // === LAYERED INSTRUMENTS ===
+  // === LAYERED INSTRUMENTS (R2 SAMPLES) ===
   // Cinematic intro
   if (bar < 4) {
     if (beat === 0) {
-      dj.pad.triggerAttackRelease(['E3', 'G3', 'B3'], '2m', time);
+      dj.sample('synth/pad-9', time);
     }
   }
   
@@ -121,23 +120,22 @@ dj.loop('16n', (time) => {
   if (bar >= 4) {
     // Half-time kick/snare
     if (beat === 0) {
-      dj.kick.triggerAttackRelease('C1', '8n', time);
+      dj.sample('drums/kick-16', time);
       dj.sidechain('8n');
     }
     if (beat === 8) {
-      dj.snare.triggerAttackRelease('C1', '8n', time);
+      dj.sample('drums/snare-11', time);
     }
     
     // Wobble bass
     if (tick % 2 === 0) {
-      const note = bassWobble[(tick / 2) % 6];
-      dj.bass.triggerAttackRelease(note, '16n', time);
+      dj.sample('bass/sub-6', time);
     }
   }
   
   // Orchestral hits
   if ([0, 8].includes(beat)) {
-    dj.strings.triggerAttackRelease('E2', '4n', time);
+    dj.sample('synth/pad-10', time);
   }
   
   tick++;

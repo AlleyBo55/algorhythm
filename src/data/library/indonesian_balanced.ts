@@ -40,41 +40,38 @@ dj.loop('16n', (time) => {
   // === INSTRUMENTS VOLUME (Balanced) ===
   dj.instruments.volume = 0.4; // 40% - subtle layer
   
-  // === DANGDUT RHYTHM (Beat-synced) ===
+  // === DANGDUT RHYTHM (R2 SAMPLES - Beat-synced) ===
   // Tabla pattern - Dha Dhin Dhin Dha
   if ([0, 4, 6, 8, 12].includes(beat)) {
-    dj.kick.triggerAttackRelease('C1', '8n', time);
+    dj.sample('indonesian/kendang-1', time);
   }
   if ([2, 10, 14].includes(beat)) {
-    dj.snare.triggerAttackRelease('C1', '16n', time);
+    dj.sample('indonesian/tabla-1', time);
   }
   
   // Gendang accents
   if ([1, 5, 9, 13].includes(beat)) {
-    dj.tom.triggerAttackRelease('C1', '16n', time);
+    dj.sample('indonesian/gendang-1', time);
   }
   
   // Keyboard chords (subtle)
   if (beat === 0) {
-    const chord = dangdutChords[bar % 4];
-    dj.piano.triggerAttackRelease(chord, '2n', time);
+    dj.sample('synth/pad-11', time);
   }
   
   // Suling melody (subtle)
   if (tick % 2 === 0) {
-    const note = sulingLine[(tick / 2) % 8];
-    dj.flute.triggerAttackRelease(note, '8n', time);
+    dj.sample('indonesian/suling-1', time);
   }
   
   // Bass line (subtle)
   if (tick % 4 === 0) {
-    const bassNotes = ['A1', 'F1', 'C2', 'G1'];
-    dj.bass.triggerAttackRelease(bassNotes[(tick / 4) % 4], '4n', time);
+    dj.sample('bass/sub-7', time);
   }
   
   // Tabla fills
   if (bar % 2 === 1 && beat >= 14) {
-    dj.clap.triggerAttackRelease('C1', '32n', time);
+    dj.sample('indonesian/tabla-2', time);
   }
   
   tick++;
@@ -119,29 +116,28 @@ dj.loop('16n', (time) => {
   // === INSTRUMENTS VOLUME (Balanced) ===
   dj.instruments.volume = 0.4; // 40% - subtle layer
   
-  // === KOPLO RHYTHM (Beat-synced) ===
+  // === KOPLO RHYTHM (R2 SAMPLES - Beat-synced) ===
   // Kendang pattern - Dung Tak
   if ([0, 3, 6, 9, 12].includes(beat)) {
-    dj.kick.triggerAttackRelease('C1', '16n', time);
+    dj.sample('indonesian/kendang-2', time);
   }
   if ([2, 5, 8, 11, 14].includes(beat)) {
-    dj.snare.triggerAttackRelease('C1', '32n', time);
+    dj.sample('indonesian/tabla-3', time);
   }
   
   // Tabla rapid hits
   if (tick % 2 === 1) {
-    dj.tom.triggerAttackRelease('C1', '32n', time);
+    dj.sample('indonesian/tabla-4', time);
   }
   
   // Suling melody (subtle)
   if (tick % 4 === 0) {
-    const note = sulingMelody[(tick / 4) % 8];
-    dj.flute.triggerAttackRelease(note, '8n', time);
+    dj.sample('indonesian/suling-2', time);
   }
   
   // Gendang fills
   if (bar % 4 === 3 && beat >= 12) {
-    dj.tom.triggerAttackRelease('C1', '32n', time);
+    dj.sample('indonesian/gendang-2', time);
   }
   
   tick++;

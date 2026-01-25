@@ -39,34 +39,31 @@ dj.loop('16n', (time) => {
     if (rev) rev.wet = 0.5;
   }
   
-  // === LAYERED INSTRUMENTS ===
+  // === LAYERED INSTRUMENTS (R2 SAMPLES) ===
   // Minimal kick (only after long build)
   if (section >= 2 && tick % 4 === 0) {
-    dj.kick.triggerAttackRelease('C1', '8n', time);
+    dj.sample('drums/kick-5', time);
     dj.sidechain('8n');
   }
   
   // Emotional chord progression
   if (beat === 0) {
-    const chord = progression[bar % 4];
-    dj.pad.triggerAttackRelease(chord, '2m', time);
+    dj.sample('synth/pad-3', time);
   }
   
   // Signature arp (builds slowly)
   if (section >= 1 && tick % 2 === 0) {
-    const note = arpNotes[(tick / 2) % 6];
-    dj.synth.triggerAttackRelease(note, '16n', time);
+    dj.sample('synth/pluck-3', time);
   }
   
   // Bass enters late
   if (section >= 2 && tick % 8 === 0) {
-    const bassNotes = ['F#1', 'D1', 'A1', 'E1'];
-    dj.bass.triggerAttackRelease(bassNotes[bar % 4], '4n', time);
+    dj.sample('bass/sub-3', time);
   }
   
   // Minimal hi-hats
   if (section >= 2 && tick % 4 === 2) {
-    dj.hihat.triggerAttackRelease('C1', '32n', time);
+    dj.sample('drums/hihat-5', time);
   }
   
   tick++;
@@ -103,39 +100,36 @@ dj.loop('16n', (time) => {
     if (dist) dist.wet = 0.15;
   }
   
-  // === LAYERED INSTRUMENTS ===
+  // === LAYERED INSTRUMENTS (R2 SAMPLES) ===
   // 4-on-floor kick
   if (tick % 4 === 0) {
-    dj.kick.triggerAttackRelease('C1', '8n', time);
+    dj.sample('drums/kick-6', time);
     dj.sidechain('8n');
   }
   
   // Aggressive bassline
   if (tick % 2 === 0) {
-    const note = bassline[(tick / 2) % 8];
-    dj.bass.triggerAttackRelease(note, '8n', time);
+    dj.sample('bass/synth-2', time);
   }
   
   // Synth stabs (signature)
   if ([0, 8].includes(beat)) {
-    const chord = [synthStabs[0], synthStabs[1], synthStabs[2]];
-    dj.synth.triggerAttackRelease(chord, '16n', time);
+    dj.sample('synth/lead-3', time);
   }
   
   // Lead melody
   if (bar >= 8 && tick % 4 === 0) {
-    const leadNotes = ['C5', 'Eb5', 'G5', 'Bb5'];
-    dj.lead.triggerAttackRelease(leadNotes[(tick / 4) % 4], '16n', time);
+    dj.sample('synth/lead-4', time);
   }
   
   // Hi-hat pattern
   if (tick % 2 === 1) {
-    dj.hihat.triggerAttackRelease('C1', '32n', time);
+    dj.sample('drums/hihat-6', time);
   }
   
   // Clap on 2 and 4
   if ([8, 24].includes(beat)) {
-    dj.clap.triggerAttackRelease('C1', '16n', time);
+    dj.sample('drums/clap-3', time);
   }
   
   tick++;

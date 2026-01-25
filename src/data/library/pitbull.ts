@@ -28,37 +28,36 @@ dj.loop('16n', (time) => {
     if (rev) rev.wet = 0.2;
   }
   
-  // === LAYERED INSTRUMENTS ===
+  // === LAYERED INSTRUMENTS (R2 SAMPLES) ===
   // Big room kick
   if (bar >= 8 && [0, 4, 8, 12].includes(beat)) {
-    dj.kick.triggerAttackRelease('C1', '8n', time);
+    dj.sample('drums/kick-11', time);
     dj.sidechain('8n');
   }
   
   // Banjo riff (using pluck)
   if (tick % 2 === 0) {
-    const note = banjoRiff[(tick / 2) % 8];
-    dj.pluck.triggerAttackRelease(note, '16n', time);
+    dj.sample('synth/pluck-4', time);
   }
   
   // Claps on 2 and 4
   if ([8].includes(beat)) {
-    dj.clap.triggerAttackRelease('C1', '16n', time);
+    dj.sample('drums/clap-4', time);
   }
   
   // Build-up snare roll
   if (bar === 7) {
-    dj.snare.triggerAttackRelease('C1', '16n', time);
+    dj.sample('drums/snare-7', time);
   }
   
   // Hi-hats
   if (tick % 2 === 1) {
-    dj.hihat.triggerAttackRelease('C1', '32n', time);
+    dj.sample('drums/hihat-11', time);
   }
   
   // Bass drops
   if (bar >= 8 && [0, 8].includes(beat)) {
-    dj.bass.triggerAttackRelease('E1', '4n', time);
+    dj.sample('bass/sub-4', time);
   }
   
   tick++;
@@ -99,39 +98,36 @@ dj.loop('16n', (time) => {
     if (rev) rev.wet = 0.25;
   }
   
-  // === LAYERED INSTRUMENTS ===
+  // === LAYERED INSTRUMENTS (R2 SAMPLES) ===
   // 4-on-floor kick
   if (tick % 4 === 0) {
-    dj.kick.triggerAttackRelease('C1', '8n', time);
+    dj.sample('drums/kick-12', time);
     dj.sidechain('8n');
   }
   
   // Latin piano chords
   if (beat === 0) {
-    const chord = latinChords[bar % 4];
-    dj.piano.triggerAttackRelease(chord, '1m', time);
+    dj.sample('synth/pad-6', time);
   }
   
   // Synth lead
   if (bar >= 8 && tick % 4 === 0) {
-    const melody = ['E5', 'G5', 'A5', 'C6'];
-    dj.synth.triggerAttackRelease(melody[(tick / 4) % 4], '8n', time);
+    dj.sample('synth/lead-8', time);
   }
   
   // Claps on 2 and 4
   if ([8].includes(beat)) {
-    dj.clap.triggerAttackRelease('C1', '16n', time);
+    dj.sample('drums/clap-5', time);
   }
   
   // Hi-hats
   if (tick % 2 === 1) {
-    dj.hihat.triggerAttackRelease('C1', '32n', time);
+    dj.sample('drums/hihat-12', time);
   }
   
   // Bass foundation
   if (tick % 8 === 0) {
-    const bassNotes = ['C2', 'A1', 'F1', 'G1'];
-    dj.bass.triggerAttackRelease(bassNotes[bar % 4], '4n', time);
+    dj.sample('bass/sub-5', time);
   }
   
   tick++;

@@ -28,32 +28,31 @@ dj.loop('16n', (time) => {
     if (rev) rev.wet = 0.3;
   }
   
-  // === LAYERED INSTRUMENTS ===
+  // === LAYERED INSTRUMENTS (R2 SAMPLES) ===
   // Moombahton kick pattern
   if ([0, 8].includes(beat)) {
-    dj.kick.triggerAttackRelease('C1', '8n', time);
+    dj.sample('drums/kick-7', time);
     dj.sidechain('8n');
   }
   
   // Snare on 2 and 4
   if ([8].includes(beat)) {
-    dj.snare.triggerAttackRelease('C1', '16n', time);
+    dj.sample('drums/snare-3', time);
   }
   
   // Indian-influenced melody
   if (tick % 2 === 0) {
-    const note = melody[(tick / 2) % 8];
-    dj.synth.triggerAttackRelease(note, '16n', time);
+    dj.sample('synth/lead-5', time);
   }
   
   // Horn stabs (signature)
   if ([0, 6, 12].includes(beat)) {
-    dj.brass.triggerAttackRelease('E3', '8n', time);
+    dj.sample('synth/brass-1', time);
   }
   
   // Dembow rhythm hi-hats
   if ([2, 5, 10, 13].includes(beat)) {
-    dj.hihat.triggerAttackRelease('C1', '32n', time);
+    dj.sample('drums/hihat-7', time);
   }
   
   tick++;
@@ -92,32 +91,31 @@ dj.loop('16n', (time) => {
     if (del) del.wet = 0.25;
   }
   
-  // === LAYERED INSTRUMENTS ===
+  // === LAYERED INSTRUMENTS (R2 SAMPLES) ===
   // Kick pattern
   if ([0, 6, 12].includes(beat)) {
-    dj.kick.triggerAttackRelease('C1', '8n', time);
+    dj.sample('drums/kick-8', time);
     dj.sidechain('8n');
   }
   
   // Vocal chops (signature sound)
   if (bar >= 8 && [0, 4, 8, 12].includes(beat)) {
-    const note = vocalChops[beat / 4];
-    dj.pluck.triggerAttackRelease(note, '32n', time);
+    dj.sample('vocals/chops-3', time);
   }
   
   // Synth stabs
   if ([2, 10].includes(beat)) {
-    dj.synth.triggerAttackRelease(['G3', 'B3', 'D4'], '16n', time);
+    dj.sample('synth/lead-6', time);
   }
   
   // Build-up snare roll
   if (bar === 7) {
-    dj.snare.triggerAttackRelease('C1', '16n', time);
+    dj.sample('drums/snare-4', time);
   }
   
   // Hi-hats
   if (bar >= 8 && tick % 2 === 1) {
-    dj.hihat.triggerAttackRelease('C1', '32n', time);
+    dj.sample('drums/hihat-8', time);
   }
   
   tick++;

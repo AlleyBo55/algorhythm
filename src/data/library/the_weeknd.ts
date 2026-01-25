@@ -33,38 +33,36 @@ dj.loop('16n', (time) => {
     if (cho) cho.wet = 0.25;
   }
   
-  // === LAYERED INSTRUMENTS ===
+  // === LAYERED INSTRUMENTS (R2 SAMPLES) ===
   // 80s drum machine kick
   if ([0, 4, 8, 12].includes(beat)) {
-    dj.kick.triggerAttackRelease('C1', '8n', time);
+    dj.sample('drums/kick-9', time);
     dj.sidechain('8n');
   }
   
   // Snare on 2 and 4
   if ([8].includes(beat)) {
-    dj.snare.triggerAttackRelease('C1', '16n', time);
+    dj.sample('drums/snare-5', time);
   }
   
   // Iconic synth melody
   if (tick % 2 === 0) {
-    const note = synthMelody[(tick / 2) % 8];
-    dj.synth.triggerAttackRelease(note, '8n', time);
+    dj.sample('synth/lead-7', time);
   }
   
   // Driving bassline
   if (tick % 2 === 0) {
-    const note = bassline[(tick / 2) % 8];
-    dj.bass.triggerAttackRelease(note, '8n', time);
+    dj.sample('bass/synth-3', time);
   }
   
   // 80s hi-hats
   if (tick % 2 === 1) {
-    dj.hihat.triggerAttackRelease('C1', '32n', time);
+    dj.sample('drums/hihat-9', time);
   }
   
   // Synth pad
   if (beat === 0) {
-    dj.pad.triggerAttackRelease(['B3', 'D4', 'F#4'], '1m', time);
+    dj.sample('synth/pad-4', time);
   }
   
   tick++;
@@ -109,32 +107,31 @@ dj.loop('16n', (time) => {
     if (dist) dist.wet = 0.1;
   }
   
-  // === LAYERED INSTRUMENTS ===
+  // === LAYERED INSTRUMENTS (R2 SAMPLES) ===
   // Trap-influenced kick
   if ([0, 6, 12].includes(beat)) {
-    dj.kick.triggerAttackRelease('C1', '8n', time);
+    dj.sample('drums/kick-10', time);
     dj.sidechain('8n');
   }
   
   // Dark synth chords
   if (beat === 0) {
-    const chord = darkChords[bar % 4];
-    dj.synth.triggerAttackRelease(chord, '1m', time);
+    dj.sample('synth/pad-5', time);
   }
   
   // 808 bass hits
   if ([0, 8].includes(beat)) {
-    dj.bass808.triggerAttackRelease('F1', '4n', time);
+    dj.sample('bass/808-1', time);
   }
   
   // Hi-hat rolls
   if (beat >= 12) {
-    dj.hihat.triggerAttackRelease('C1', '32n', time);
+    dj.sample('drums/hihat-10', time);
   }
   
   // Snare on 2
   if (beat === 8) {
-    dj.snare.triggerAttackRelease('C1', '16n', time);
+    dj.sample('drums/snare-6', time);
   }
   
   tick++;
