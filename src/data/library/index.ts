@@ -15,6 +15,9 @@ export * from './effects_remixes';
 
 // Indonesian Templates
 export * from './indonesian';
+export * from './indonesian_true_remix';
+export * from './indonesian_balanced';
+export * from './indonesian_realistic';
 
 // Unified Style System
 export * from './unified_styles';

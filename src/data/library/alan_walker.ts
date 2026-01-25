@@ -24,11 +24,14 @@ dj.loop('16n', (time) => {
   const beat = tick % 16;
   
   // === UNIFIED STYLE + FLAVOR ===
-  // Emotional reverb on all tracks
+  // Original track stays at full volume
   dj.deck.A.eq.high = 0;
   dj.deck.A.eq.mid = 0;
   dj.deck.A.eq.low = 0;
   dj.deck.A.filter.cutoff = 20000;
+  
+  // Instruments at 30% (subtle layer)
+  dj.instruments.volume = 0.3;
   
   // Add reverb effect
   if (bar === 0 && beat === 0) {
