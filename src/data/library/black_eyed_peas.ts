@@ -9,6 +9,20 @@ export const black_eyed_peas_boom_boom_pow: Template = {
 // Signature: Futuristic electro, robotic vocals, heavy bass
 dj.bpm = 130;
 
+// Transform loaded tracks
+if (dj.deck.A.duration > 0) {
+  dj.deck.A.bpm = 128;
+  dj.deck.A.effects.add('reverb', 'reverb');
+  const fx = dj.deck.A.effects.get('reverb');
+  if (fx) fx.wet = 0.25;
+}
+if (dj.deck.B.duration > 0) {
+  dj.deck.B.bpm = 128;
+  dj.deck.B.effects.add('reverb', 'reverb');
+  const fx = dj.deck.B.effects.get('reverb');
+  if (fx) fx.wet = 0.25;
+}
+
 const roboticMelody = ['E4', 'E4', 'D4', 'C4', 'B3', 'C4', 'D4', 'E4'];
 let tick = 0;
 
@@ -25,7 +39,6 @@ dj.loop('16n', (time) => {
   if (tick % 2 === 0) {
     const note = roboticMelody[(tick / 2) % 8];
     dj.synth.triggerAttackRelease(note, '16n', time);
-    dj.effects.vocoder.wet.value = 0.8;
   }
   
   // Snare on 2 and 4
@@ -36,11 +49,6 @@ dj.loop('16n', (time) => {
   // Sub bass
   if ([0, 8].includes(beat)) {
     dj.bass.triggerAttackRelease('E1', '4n', time);
-  }
-  
-  // Futuristic FX
-  if (beat === 0) {
-    dj.effects.bitcrusher.bits.value = 4;
   }
   
   tick++;
@@ -54,6 +62,20 @@ export const black_eyed_peas_i_gotta_feeling: Template = {
   description: 'Party anthem with uplifting house vibes',
   code: `// BLACK EYED PEAS - I Gotta Feeling
 dj.bpm = 128;
+
+// Transform loaded tracks
+if (dj.deck.A.duration > 0) {
+  dj.deck.A.bpm = 128;
+  dj.deck.A.effects.add('reverb', 'reverb');
+  const fx = dj.deck.A.effects.get('reverb');
+  if (fx) fx.wet = 0.25;
+}
+if (dj.deck.B.duration > 0) {
+  dj.deck.B.bpm = 128;
+  dj.deck.B.effects.add('reverb', 'reverb');
+  const fx = dj.deck.B.effects.get('reverb');
+  if (fx) fx.wet = 0.25;
+}
 
 const partyChords = [
   ['G3', 'B3', 'D4'],   // G

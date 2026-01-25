@@ -4,6 +4,7 @@ import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import Editor, { Monaco } from '@monaco-editor/react';
 import { editor } from 'monaco-editor';
 import { dj } from '@/engine/djapi';
+import { audioEngine } from '@/engine/audio';
 import { AIAssistant } from './AIAssistant';
 import { Play, Square, Save, FolderOpen, Undo, Redo, Settings, Code2, Search, FileText } from 'lucide-react';
 
@@ -129,6 +130,7 @@ export const CodeEditorPanel = memo(function CodeEditorPanel() {
 
   const handleStop = useCallback(() => {
     dj.stop();
+    audioEngine.stop();
     setIsRunning(false);
   }, []);
 
@@ -348,11 +350,6 @@ export const CodeEditorPanel = memo(function CodeEditorPanel() {
       </div>
 
       <TemplateSelector onSelect={setCode} />
-
-      <AIAssistant
-        onCodeInsert={(newCode) => setCode(newCode)}
-        getCurrentCode={() => editorRef.current?.getValue() || code}
-      />
     </div>
   );
 });
@@ -373,7 +370,29 @@ const TemplateSelector = memo(function TemplateSelector({
 }: {
   onSelect: (code: string) => void
 }) {
-  const templates = [
+  const [showAll, setShowAll] = useState(false);
+  const { TEMPLATES } = require('@/data/templates');
+  
+  // Clear any cached broken templates on mount
+  useEffect(() => {
+    const TEMPLATE_VERSION = '2.0'; // Increment to force clear
+    const lastVersion = localStorage.getItem('algorhythm_template_version');
+    
+    if (lastVersion !== TEMPLATE_VERSION) {
+      console.log('Template version updated, clearing cache');
+      localStorage.removeItem('algorhythm_saved_code');
+      localStorage.setItem('algorhythm_template_version', TEMPLATE_VERSION);
+    }
+  }, []);
+  
+  // Group templates by persona
+  const groupedTemplates = TEMPLATES.reduce((acc: any, t: any) => {
+    if (!acc[t.persona]) acc[t.persona] = [];
+    acc[t.persona].push(t);
+    return acc;
+  }, {});
+
+  const quickTemplates = [
     { name: 'Starter', code: getStarterCode() },
     { name: 'Alan Walker', code: getAlanWalkerTemplate() },
     { name: 'Marshmello', code: getMarshmelloTemplate() },
@@ -381,19 +400,56 @@ const TemplateSelector = memo(function TemplateSelector({
   ];
 
   return (
-    <div className="p-3 border-t border-zinc-800">
-      <label className="text-xs text-zinc-400 mb-2 block">Quick Templates</label>
-      <div className="flex gap-2 flex-wrap">
-        {templates.map((t) => (
-          <button
-            key={t.name}
-            onClick={() => onSelect(t.code)}
-            className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white text-xs rounded-lg transition-colors"
-          >
-            {t.name}
-          </button>
-        ))}
+    <div className="p-3 border-t border-zinc-800 relative z-[60]">
+      <div className="flex items-center justify-between mb-2">
+        <label className="text-xs text-zinc-400">Templates</label>
+        <button
+          onClick={() => setShowAll(!showAll)}
+          className="text-xs text-primary hover:text-primary/80 transition-colors relative z-[70]"
+        >
+          {showAll ? 'Show Less' : `Browse All (${TEMPLATES.length})`}
+        </button>
       </div>
+      
+      {!showAll ? (
+        <div className="flex gap-2 flex-wrap">
+          {quickTemplates.map((t) => (
+            <button
+              key={t.name}
+              onClick={() => onSelect(t.code)}
+              className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white text-xs rounded-lg transition-colors"
+            >
+              {t.name}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="max-h-96 overflow-y-auto space-y-4 pr-2 relative z-[70] bg-black/95 backdrop-blur-xl rounded-lg p-2 border border-white/10">
+          {Object.entries(groupedTemplates).map(([persona, templates]: [string, any]) => (
+            <div key={persona} className="space-y-2">
+              <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider">
+                {persona}
+              </h3>
+              <div className="grid grid-cols-2 gap-2">
+                {templates.map((t: any) => (
+                  <button
+                    key={t.id}
+                    onClick={() => onSelect(t.code)}
+                    className="group px-3 py-2 bg-zinc-800/50 hover:bg-zinc-700 border border-zinc-700 hover:border-primary/50 rounded-lg transition-all text-left"
+                  >
+                    <div className="text-xs font-medium text-white group-hover:text-primary transition-colors">
+                      {t.name}
+                    </div>
+                    <div className="text-[10px] text-zinc-500 mt-0.5 line-clamp-2">
+                      {t.description}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 });

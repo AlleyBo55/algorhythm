@@ -61,6 +61,11 @@ export const DeckComponent = memo(function DeckComponent({ id, small }: DeckProp
     setIsPlaying(false);
   }, [deck]);
 
+  const handleStop = useCallback(() => {
+    deck.stop();
+    setIsPlaying(false);
+  }, [deck]);
+
   return (
     <Card
       variant="glass"
@@ -173,7 +178,7 @@ export const DeckComponent = memo(function DeckComponent({ id, small }: DeckProp
           {/* Transport Controls */}
           <div className={cn(
             "flex items-center justify-center gap-1.5",
-            small ? "shrink-0" : "gap-4"
+            small ? "shrink-0" : "gap-2"
           )}>
             <Button
               size="icon"
@@ -202,6 +207,20 @@ export const DeckComponent = memo(function DeckComponent({ id, small }: DeckProp
               disabled={trackName === 'No Track Loaded'}
             >
               <svg className={small ? "w-3 h-3" : "w-4 h-4"} fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
+            </Button>
+            
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={handleStop}
+              className={cn(
+                "rounded-full border border-white/10 hover:bg-red-500/20 hover:border-red-500/50",
+                small ? "h-7 w-7" : "h-10 w-10"
+              )}
+              title="Stop"
+              disabled={trackName === 'No Track Loaded'}
+            >
+              <svg className={small ? "w-3 h-3" : "w-4 h-4"} fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h12v12H6z" /></svg>
             </Button>
           </div>
 

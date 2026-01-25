@@ -66,7 +66,6 @@ export function AIAssistant({ onCodeInsert, getCurrentCode }: {
   onCodeInsert: (code: string) => void;
   getCurrentCode?: () => string;
 }) {
-  const [isOpen, setIsOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -102,7 +101,6 @@ export function AIAssistant({ onCodeInsert, getCurrentCode }: {
     setIsLoading(true);
 
     try {
-      // Include current editor context
       const contextMessage = `Current code context:\n\`\`\`typescript\n${getCurrentCode ? getCurrentCode() : ''}\n\`\`\``;
       const response = await callAI(config, [...messages, { role: 'user', content: contextMessage + '\n\n' + input }]);
       setMessages(prev => [...prev, { role: 'assistant', content: response }]);
@@ -123,44 +121,25 @@ export function AIAssistant({ onCodeInsert, getCurrentCode }: {
     }
   };
 
-  if (!isOpen) {
-    return (
-      <button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(99,102,241,0.5)] hover:shadow-[0_0_50px_rgba(99,102,241,0.7)] transition-all hover:scale-110 z-50 animate-pulse-soft"
-      >
-        <Sparkles className="w-6 h-6 text-white" />
-      </button>
-    );
-  }
-
   return (
-    <div className="fixed bottom-6 right-6 w-[400px] h-[650px] bg-black/80 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl flex flex-col z-50 overflow-hidden transform transition-all duration-300 animate-slide-up">
+    <div className="flex-1 min-h-[200px] max-h-[600px] bg-black/20 backdrop-blur-xl rounded-xl border border-white/5 flex flex-col overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-white/5 bg-gradient-to-r from-indigo-500/10 to-purple-500/10">
-        <div className="flex items-center gap-3">
-          <div className="p-2 bg-indigo-500/20 rounded-lg">
-            <Sparkles className="w-4 h-4 text-indigo-400" />
+      <div className="flex items-center justify-between p-3 border-b border-white/5 bg-gradient-to-r from-indigo-500/10 to-purple-500/10">
+        <div className="flex items-center gap-2">
+          <div className="p-1.5 bg-indigo-500/20 rounded-lg">
+            <Sparkles className="w-3 h-3 text-indigo-400" />
           </div>
           <div>
-            <span className="font-bold text-sm block">AI Copilot</span>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-wider block">{config?.model || 'Offline'}</span>
+            <span className="font-bold text-xs">AI Assistant</span>
+            <span className="text-[9px] text-muted-foreground uppercase tracking-wider block">{config?.model || 'Offline'}</span>
           </div>
         </div>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setShowSettings(true)}
-            className="p-2 hover:bg-white/10 rounded-lg transition-colors text-muted-foreground hover:text-white"
-          >
-            <Settings className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => setIsOpen(false)}
-            className="p-2 hover:bg-white/10 rounded-lg transition-colors text-muted-foreground hover:text-white"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+        <button
+          onClick={() => setShowSettings(true)}
+          className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-muted-foreground hover:text-white"
+        >
+          <Settings className="w-3 h-3" />
+        </button>
       </div>
 
       {/* Settings Modal */}
@@ -173,7 +152,7 @@ export function AIAssistant({ onCodeInsert, getCurrentCode }: {
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth">
+      <div className="flex-1 overflow-y-auto p-3 space-y-3 scroll-smooth text-sm">
         {!config && (
           <div className="bg-gradient-to-br from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 rounded-xl p-5 text-sm backdrop-blur-sm">
             <div className="flex gap-3">
@@ -230,23 +209,23 @@ export function AIAssistant({ onCodeInsert, getCurrentCode }: {
       </div>
 
       {/* Input */}
-      <div className="p-4 border-t border-white/5 bg-black/40 backdrop-blur-md">
+      <div className="p-2 border-t border-white/5 bg-black/40 backdrop-blur-md">
         <div className="relative">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-            placeholder={config ? "Ask AI to generate a beat..." : "Configure AI first..."}
+            placeholder={config ? "Ask AI..." : "Configure AI first..."}
             disabled={!config || isLoading}
-            className="w-full bg-white/5 border border-white/10 rounded-xl pl-4 pr-12 py-3.5 text-sm text-white placeholder:text-zinc-500 focus:outline-none focus:border-indigo-500/50 focus:bg-white/10 transition-all disabled:opacity-50"
+            className="w-full bg-white/5 border border-white/10 rounded-lg pl-3 pr-10 py-2 text-xs text-white placeholder:text-zinc-500 focus:outline-none focus:border-indigo-500/50 focus:bg-white/10 transition-all disabled:opacity-50"
           />
           <button
             onClick={sendMessage}
             disabled={!config || !input.trim() || isLoading}
-            className="absolute right-2 top-2 p-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors disabled:opacity-0 disabled:scale-90 transform duration-200"
+            className="absolute right-1.5 top-1.5 p-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded transition-colors disabled:opacity-0 disabled:scale-90 transform duration-200"
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-3 h-3" />
           </button>
         </div>
       </div>

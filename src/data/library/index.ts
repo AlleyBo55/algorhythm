@@ -9,3 +9,15 @@ export * from './teddy_park';
 export * from './pitbull';
 export * from './far_east_movement';
 export * from './black_eyed_peas';
+
+// Effect-Heavy Remix Templates
+export * from './effects_remixes';
+
+// Indonesian Templates
+export * from './indonesian';
+export * from './indonesian_true_remix';
+export * from './indonesian_balanced';
+export * from './indonesian_realistic';
+
+// Unified Style System
+export * from './unified_styles';

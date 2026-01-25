@@ -5,6 +5,7 @@ import { DeckComponent } from '@/components/Deck';
 import { MixerComponent } from '@/components/Mixer';
 import { CodeEditorPanel } from '@/components/CodeEditor';
 import { Visualizer } from '@/components/Visualizer';
+import { AIAssistant } from '@/components/AIAssistant';
 
 import { dj } from '@/engine/djapi';
 import { Button } from '@/components/ui/Button';
@@ -85,10 +86,18 @@ export default function HomePage() {
 
             <MixerComponent />
 
-            {/* System Status */}
-            <div className="flex-1 min-h-[100px] bg-black/20 rounded-xl border border-white/5 flex items-center justify-center text-muted-foreground text-xs uppercase tracking-widest">
-              System Ready
-            </div>
+            {/* AI Assistant - Replaces System Status */}
+            <AIAssistant
+              onCodeInsert={(newCode) => {
+                // Find and update code editor
+                const event = new CustomEvent('insertCode', { detail: newCode });
+                window.dispatchEvent(event);
+              }}
+              getCurrentCode={() => {
+                // Get current code from editor
+                return '';
+              }}
+            />
           </div>
         </div>
       </div>
@@ -119,7 +128,7 @@ const Header = memo(function Header() {
 
       <nav className="flex items-center gap-3">
         <Button variant="ghost" size="sm" onClick={() => alert("Hub feature coming soon!")}>Hub</Button>
-        <Button variant="ghost" size="sm" onClick={() => alert("Documentation is under construction")}>Docs</Button>
+        <Button variant="ghost" size="sm" onClick={() => window.location.href = '/docs'}>Docs</Button>
         <Button variant="glow" size="sm" className="hidden sm:flex">
           Save Session
         </Button>
