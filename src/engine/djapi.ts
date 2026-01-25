@@ -5,6 +5,7 @@ import { recordingEngine } from './recorder';
 import { midiController } from './midi';
 import { getInstruments, getEffects } from './instruments';
 import { styleProcessor } from './styleProcessor';
+import { addSampleSupport } from './samplePlayer';
 // ... (keep existing imports)
 
 
@@ -50,6 +51,10 @@ export class DJAPI {
     });
 
     this.sampler.connect(mixer.master);
+    
+    // Add sample player support
+    addSampleSupport(this as any);
+    console.log('✅ Sample Player: Connected to DJ API');
   }
 
   public static getInstance(): DJAPI {

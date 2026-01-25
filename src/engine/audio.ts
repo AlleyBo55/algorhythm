@@ -4,6 +4,7 @@ import { Deck } from './deck';
 import { mixer } from './mixer';
 import { audioAnalyzer } from './analyzer';
 import { styleProcessor } from './styleProcessor';
+import { addSampleSupport } from './samplePlayer';
 
 export class AudioEngine {
     private static instance: AudioEngine;
@@ -41,6 +42,10 @@ export class AudioEngine {
 
         // Preload instruments
         getInstruments();
+        
+        // Initialize sample player support
+        console.log('🎵 Sample Player: Initializing...');
+        // Sample player will be added to DJ API in djapi.ts
 
         // Wait for all samples to load
         await Tone.loaded();
