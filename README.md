@@ -80,6 +80,47 @@ dj.loop('16n', (time) => {
 4. Press `SHIFT+ENTER` or click "RUN_EXEC"
 5. 🎉 You're DJing with code!
 
+## 🧪 Testing
+
+We use Vitest for unit and integration testing.
+
+### Run Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run specific test file
+npm test -- src/tests/engine/patternParser.test.ts
+```
+
+### Test Structure
+
+```
+src/tests/
+├── engine/           # Audio engine tests
+│   ├── patternParser.test.ts
+│   ├── automation.test.ts
+│   ├── templates.test.ts
+│   ├── presets.test.ts
+│   └── remixEngine.test.ts
+├── data/             # Data layer tests
+│   ├── library.test.ts
+│   └── templates.test.ts
+├── features/         # Feature module tests
+│   └── streaming/
+│       ├── chat.test.ts
+│       └── storage.test.ts
+└── utils/            # Utility tests
+    └── helpers.test.ts
+```
+
 ## 📚 Documentation
 
 **[View Full Documentation →](/docs)**
@@ -111,6 +152,39 @@ Check out the built-in templates:
 - **Waveforms**: WaveSurfer.js
 - **Analysis**: Essentia.js, Web Audio Beat Detector
 - **Time Stretching**: SoundTouch.js
+- **Testing**: Vitest + React Testing Library
+
+## 📁 Project Structure
+
+```
+src/
+├── app/              # Next.js App Router pages
+├── components/       # React components
+│   ├── ui/           # Reusable UI primitives
+│   ├── deck/         # Deck-related components
+│   ├── mixer/        # Mixer components
+│   ├── streaming/    # Streaming dashboard
+│   └── Effects/      # Visual effects
+├── engine/           # Audio engine (core)
+│   ├── core/         # Deck, Mixer, MasterBus
+│   ├── timing/       # BeatSync, Quantize, TimeStretch
+│   ├── instruments/  # Synths and samplers
+│   ├── remix/        # RemixEngine, StyleProcessor
+│   ├── control/      # MIDI, Vinyl
+│   ├── analysis/     # Spectrum, Performance
+│   ├── playback/     # Sample playback
+│   ├── dsp/          # Effects (Delay, Reverb, EQ)
+│   └── streaming/    # Live streaming support
+├── features/         # Feature modules
+│   ├── audio/        # Audio feature exports
+│   ├── library/      # Template library
+│   └── streaming/    # Streaming integration
+├── data/             # Static data and templates
+│   └── library/      # Song templates
+├── hooks/            # React hooks
+├── lib/              # Utilities
+└── tests/            # Test files
+```
 
 ## 🎯 Use Cases
 
