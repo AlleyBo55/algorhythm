@@ -15,7 +15,7 @@ export default function DocsPage() {
         
         <div className="space-y-4">
           <Step number={1} title="Initialize">
-            Click "Start Session" on the welcome screen to initialize the audio engine.
+            Click &quot;Start Session&quot; on the welcome screen to initialize the audio engine.
           </Step>
           
           <Step number={2} title="Write Code">
@@ -60,7 +60,7 @@ dj.loop('16n', (time) => {
         
         <div className="grid gap-4">
           <Concept title="BPM" description="Set the tempo with dj.bpm = 128" />
-          <Concept title="Loops" description="Create timed loops with dj.loop('16n', callback)" />
+          <Concept title="Loops" description="Create timed loops with dj.loop(&apos;16n&apos;, callback)" />
           <Concept title="Instruments" description="Trigger sounds with dj.kick, dj.snare, dj.hihat, etc." />
           <Concept title="Time" description="Use the time parameter for precise scheduling" />
         </div>
@@ -79,11 +79,11 @@ dj.loop('16n', (time) => {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800">
-              <tr><td className="px-4 py-3 font-mono text-[#1db954]">'1m'</td><td className="px-4 py-3 text-zinc-300">1 measure (4 beats)</td></tr>
-              <tr><td className="px-4 py-3 font-mono text-[#1db954]">'4n'</td><td className="px-4 py-3 text-zinc-300">Quarter note (1 beat)</td></tr>
-              <tr><td className="px-4 py-3 font-mono text-[#1db954]">'8n'</td><td className="px-4 py-3 text-zinc-300">Eighth note (half beat)</td></tr>
-              <tr><td className="px-4 py-3 font-mono text-[#1db954]">'16n'</td><td className="px-4 py-3 text-zinc-300">Sixteenth note</td></tr>
-              <tr><td className="px-4 py-3 font-mono text-[#1db954]">'32n'</td><td className="px-4 py-3 text-zinc-300">Thirty-second note</td></tr>
+              <tr><td className="px-4 py-3 font-mono text-[#1db954]">&apos;1m&apos;</td><td className="px-4 py-3 text-zinc-300">1 measure (4 beats)</td></tr>
+              <tr><td className="px-4 py-3 font-mono text-[#1db954]">&apos;4n&apos;</td><td className="px-4 py-3 text-zinc-300">Quarter note (1 beat)</td></tr>
+              <tr><td className="px-4 py-3 font-mono text-[#1db954]">&apos;8n&apos;</td><td className="px-4 py-3 text-zinc-300">Eighth note (half beat)</td></tr>
+              <tr><td className="px-4 py-3 font-mono text-[#1db954]">&apos;16n&apos;</td><td className="px-4 py-3 text-zinc-300">Sixteenth note</td></tr>
+              <tr><td className="px-4 py-3 font-mono text-[#1db954]">&apos;32n&apos;</td><td className="px-4 py-3 text-zinc-300">Thirty-second note</td></tr>
             </tbody>
           </table>
         </div>
@@ -126,7 +126,7 @@ function Concept({ title, description }: { title: string; description: string })
   return (
     <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-lg">
       <h3 className="font-medium text-white mb-1">{title}</h3>
-      <p className="text-sm text-zinc-400">{description}</p>
+      <p className="text-sm text-zinc-400 font-mono">{description}</p>
     </div>
   );
 }
