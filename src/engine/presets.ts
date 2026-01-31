@@ -2,32 +2,32 @@ import * as Tone from 'tone';
 import { getInstruments, InstrumentMap } from './instruments';
 
 export interface PresetMap {
-    // Alan Walker style - ethereal, melodic EDM
-    alanWalker: () => void;
-    // Marshmello style - happy future bass  
-    marshmello: () => void;
-    // Steve Aoki style - aggressive electro house
-    steveAoki: () => void;
-    // Diplo style - eclectic trap/moombahton
-    diplo: () => void;
+    // Ethereal, melodic EDM style
+    etherealEDM: () => void;
+    // Happy future bass style
+    futureBass: () => void;
+    // Aggressive electro house
+    electroHouse: () => void;
+    // Eclectic trap/moombahton
+    moombahton: () => void;
     // Synthwave/80s retro
     synthwave: () => void;
-    // Stranger Things style
-    strangerThings: () => void;
-    // Mandalorian/cinematic western
-    mandalorian: () => void;
+    // Dark synth style
+    darkSynth: () => void;
+    // Cinematic western
+    cinematicWestern: () => void;
     // Lo-fi chill
     lofi: () => void;
     // Anime OST - emotional/action soundtrack
     animeOst: () => void;
     // Anime battle/action music
     animeBattle: () => void;
-    // Daft Punk - French House
-    daftPunk: () => void;
-    // Hans Zimmer - Epic Cinematic
-    hansZimmer: () => void;
-    // Ghibli - Orchestral Piano
-    ghibli: () => void;
+    // French House
+    frenchHouse: () => void;
+    // Epic Cinematic
+    epicCinematic: () => void;
+    // Orchestral Piano
+    orchestralPiano: () => void;
     // Trap - Heavy 808s
     trap: () => void;
     // Eurobeat - High Energy
@@ -38,16 +38,16 @@ export interface PresetMap {
     rock: () => void;
     // Orchestral - Cinematic
     orchestral: () => void;
-    // The Weeknd - Dark Synth Pop
-    theWeeknd: () => void;
-    // Dua Lipa - Nu-Disco Pop
-    duaLipa: () => void;
-    // Nujabes - Jazz Hop / Lofi God
-    nujabes: () => void;
-    // Post Malone - Cloud Rap / Trap
-    postMalone: () => void;
-    // Linkin Park - Nu Metal
-    linkinPark: () => void;
+    // Dark Synth Pop
+    darkSynthPop: () => void;
+    // Nu-Disco Pop
+    nuDisco: () => void;
+    // Jazz Hop / Lofi
+    jazzHop: () => void;
+    // Cloud Rap / Trap
+    cloudRap: () => void;
+    // Nu Metal
+    nuMetal: () => void;
     // Funky 80s / Disco
     funky_80s: () => void;
     reset: () => void;
@@ -55,8 +55,8 @@ export interface PresetMap {
 
 export function createPresets(inst: InstrumentMap): PresetMap {
     return {
-        alanWalker: () => {
-            // Ethereal, atmospheric, "Faded" style
+        etherealEDM: () => {
+            // Ethereal, atmospheric melodic style
             inst.pad.set({
                 oscillator: { type: 'fatsawtooth', count: 3, spread: 30 } as any,
                 envelope: { attack: 1.5, decay: 0.5, sustain: 1, release: 4 },
@@ -77,8 +77,8 @@ export function createPresets(inst: InstrumentMap): PresetMap {
             });
         },
 
-        marshmello: () => {
-            // Happy, bouncy future bass - MARSHMELLO STYLE
+        futureBass: () => {
+            // Happy, bouncy future bass style
             // 1. LEAD: Huge, wide Supersaw
             inst.lead.set({
                 oscillator: { type: 'fatsawtooth', count: 7, spread: 70 }, // Increased spread
