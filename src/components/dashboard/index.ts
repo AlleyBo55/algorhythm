@@ -1,3 +1,3 @@
 // Dashboard Components
-export { default as PerformanceDashboard } from '../PerformanceDashboard';
-export { default as HelpGuide } from '../HelpGuide';
+export { PerformanceDashboard } from "./PerformanceDashboard";
+export { HelpGuide } from "./HelpGuide";

@@ -1,38 +1,34 @@
 import * as Tone from 'tone';
 
-// R2 CDN for all samples
-const R2_CDN = process.env.NEXT_PUBLIC_R2_CDN || 'https://pub-1bb3c1da6ec04255a43c86fb314974e5.r2.dev';
-
-// Track if samplers are loaded
+// Track if instruments are ready
 let samplersLoaded = false;
-let samplersLoadingPromise: Promise<void> | null = null;
 
 export interface InstrumentMap {
     // Drums (Real Samples)
-    kick: Tone.Sampler;
-    snare: Tone.Sampler;
-    hihat: Tone.Sampler;
-    clap: Tone.Sampler;
-    tom: Tone.Sampler;
+    kick: Tone.Sampler | Tone.MembraneSynth;
+    snare: Tone.Sampler | Tone.NoiseSynth;
+    hihat: Tone.Sampler | Tone.MetalSynth;
+    clap: Tone.Sampler | Tone.NoiseSynth;
+    tom: Tone.Sampler | Tone.MembraneSynth;
 
     // Bass & Lead
-    bass: Tone.Sampler;
+    bass: Tone.Sampler | Tone.MonoSynth;
     lead: Tone.PolySynth<Tone.MonoSynth>;
 
     // New Synths
     pad: Tone.PolySynth;      // Atmospheric, long sustain
     arp: Tone.MonoSynth;      // Plucky, for arpeggios
-    pluck: Tone.Sampler;   // Guitar
+    pluck: Tone.Sampler | Tone.PolySynth;   // Guitar
     fm: Tone.PolySynth<Tone.FMSynth>;         // FM synthesis for bells/metallic
-    strings: Tone.Sampler;  // Cello/Strings
-    piano: Tone.Sampler;    // Electric/Keys
+    strings: Tone.Sampler | Tone.PolySynth;  // Cello/Strings
+    piano: Tone.Sampler | Tone.PolySynth;    // Electric/Keys
     sub: Tone.MonoSynth;      // Sub bass
 
     // New Semantic Instruments
     flute: Tone.PolySynth;
     trumpet: Tone.PolySynth;
     violin: Tone.PolySynth;
-    cymbal: Tone.Sampler;
+    cymbal: Tone.Sampler | Tone.MetalSynth;
     bass808: Tone.MembraneSynth;
 
     // === 99% ACCURATE SONG-SPECIFIC INSTRUMENTS ===
@@ -72,7 +68,6 @@ let compressor: Tone.Compressor;
 let masterEQ: Tone.EQ3;
 let masterGain: Tone.Gain;
 let instrumentsGain: Tone.Gain; // Separate gain for instruments
-let masterSaturation: Tone.Chebyshev; // For analog warmth
 let sidechainBus: Tone.Gain; // Virtual bus for sidechaining
 
 function initEffects() {
@@ -93,8 +88,6 @@ function initEffects() {
         mid: 0,
         high: 0
     }).connect(compressor);
-
-    masterSaturation = new Tone.Chebyshev(50).toDestination(); // Odd harmonics for warmth
 
     // Main volume control - everything should eventually connect here
     masterGain = new Tone.Gain(0.8).connect(masterEQ);
@@ -140,59 +133,75 @@ export class DefaultInstruments {
     constructor() {
         initEffects();
 
+        // Create fallback synths for when samples fail to load
+        const kickFallback = () => new Tone.MembraneSynth({
+            pitchDecay: 0.05,
+            octaves: 6,
+            oscillator: { type: 'sine' },
+            envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 0.4 },
+            volume: 0
+        });
+
+        const snareFallback = () => new Tone.NoiseSynth({
+            noise: { type: 'white' },
+            envelope: { attack: 0.001, decay: 0.2, sustain: 0, release: 0.2 },
+            volume: -6
+        });
+
+        const hihatFallback = () => new Tone.MetalSynth({
+            envelope: { attack: 0.001, decay: 0.1, release: 0.01 },
+            harmonicity: 5.1,
+            modulationIndex: 32,
+            resonance: 4000,
+            octaves: 1.5,
+            volume: -10
+        });
+
+        const bassFallback = () => new Tone.MonoSynth({
+            oscillator: { type: 'sawtooth' },
+            envelope: { attack: 0.01, decay: 0.3, sustain: 0.4, release: 0.5 },
+            filterEnvelope: { attack: 0.01, decay: 0.2, sustain: 0.5, release: 0.5, baseFrequency: 100, octaves: 2 },
+            volume: 0
+        });
+
+        const pluckFallback = () => new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: 'triangle' },
+            envelope: { attack: 0.01, decay: 0.3, sustain: 0.2, release: 0.5 },
+            volume: -3
+        });
+
+        const stringsFallback = () => new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: 'fatsawtooth', count: 3, spread: 20 } as any,
+            envelope: { attack: 0.5, decay: 0.5, sustain: 0.8, release: 2 },
+            volume: -4
+        });
+
+        const pianoFallback = () => new Tone.PolySynth(Tone.Synth, {
+            oscillator: { type: 'triangle8' },
+            envelope: { attack: 0.01, decay: 0.5, sustain: 0.3, release: 1 },
+            volume: -2
+        });
+
         this.instruments = {
-            // === DRUMS FROM R2 CDN ===
-            kick: new Tone.Sampler({
-                urls: {
-                    C1: "drums/kick-1.mp3"
-                },
-                baseUrl: R2_CDN + "/",
-                volume: 0,
-                onload: () => console.log('✅ R2: kick loaded'),
-                onerror: (e) => console.error('❌ R2 kick failed:', e),
-            }).connect(instrumentsGain),
+            // === DRUMS - Use synth fallbacks for reliability ===
+            kick: kickFallback().connect(instrumentsGain),
 
-            snare: new Tone.Sampler({
-                urls: {
-                    C1: "drums/snare-1.mp3"
-                },
-                baseUrl: R2_CDN + "/",
-                volume: 0,
+            snare: snareFallback().connect(reverb),
+
+            hihat: hihatFallback().connect(instrumentsGain),
+
+            clap: snareFallback().connect(reverb),
+
+            tom: new Tone.MembraneSynth({
+                pitchDecay: 0.08,
+                octaves: 4,
+                oscillator: { type: 'sine' },
+                envelope: { attack: 0.001, decay: 0.5, sustain: 0.01, release: 0.5 },
+                volume: 0
             }).connect(reverb),
 
-            hihat: new Tone.Sampler({
-                urls: {
-                    C1: "drums/hihat-1.mp3"
-                },
-                baseUrl: R2_CDN + "/",
-                volume: -4,
-            }).connect(instrumentsGain),
-
-            clap: new Tone.Sampler({
-                urls: {
-                    C1: "drums/clap-1.mp3"
-                },
-                baseUrl: R2_CDN + "/",
-                volume: 0,
-            }).connect(reverb),
-
-            tom: new Tone.Sampler({
-                urls: {
-                    C1: "drums/tom-1.mp3"
-                },
-                baseUrl: R2_CDN + "/",
-                volume: 0,
-            }).connect(reverb),
-
-            // === BASS FROM R2 CDN ===
-            bass: new Tone.Sampler({
-                urls: {
-                    C1: "bass/sub-1.mp3",
-                    C2: "bass/sub-2.mp3",
-                },
-                baseUrl: R2_CDN + "/",
-                volume: 0,
-            }).connect(instrumentsGain),
+            // === BASS - Use synth for reliability ===
+            bass: bassFallback().connect(instrumentsGain),
 
             // === LEADS (Kept as Synth for Versatility, but upgraded) ===
             lead: new Tone.PolySynth(Tone.MonoSynth, {
@@ -253,14 +262,8 @@ export class DefaultInstruments {
                 volume: 0
             }).connect(delay).connect(reverb),
 
-            // === PLUCK FROM R2 CDN ===
-            pluck: new Tone.Sampler({
-                urls: {
-                    C3: "synth/pluck-1.mp3",
-                },
-                baseUrl: R2_CDN + "/",
-                volume: -3,
-            }).connect(reverb),
+            // === PLUCK - Use synth for reliability ===
+            pluck: pluckFallback().connect(reverb),
 
             // === FM ===
             fm: new Tone.PolySynth(Tone.FMSynth, {
@@ -283,23 +286,11 @@ export class DefaultInstruments {
                 volume: -5
             }).connect(delay).connect(longReverb),
 
-            // === STRINGS (Synth-based for reliability) ===
-            strings: new Tone.Sampler({
-                urls: {
-                    C3: "synth/pad-1.mp3",
-                },
-                baseUrl: R2_CDN + "/",
-                volume: -4,
-            }).connect(chorus).connect(longReverb),
+            // === STRINGS - Use synth for reliability ===
+            strings: stringsFallback().connect(chorus).connect(longReverb),
 
-            // === PIANO (Synth-based for reliability) ===
-            piano: new Tone.Sampler({
-                urls: {
-                    C3: "synth/pluck-1.mp3",
-                },
-                baseUrl: R2_CDN + "/",
-                volume: -2,
-            }).connect(reverb),
+            // === PIANO - Use synth for reliability ===
+            piano: pianoFallback().connect(reverb),
 
             // === SUB ===
             sub: new Tone.MonoSynth({
@@ -355,12 +346,13 @@ export class DefaultInstruments {
                 volume: -6
             }).connect(longReverb),
 
-            cymbal: new Tone.Sampler({
-                urls: {
-                    C1: "drums/hihat-2.mp3"
-                },
-                baseUrl: R2_CDN + "/",
-                volume: -6,
+            cymbal: new Tone.MetalSynth({
+                envelope: { attack: 0.001, decay: 0.4, release: 0.2 },
+                harmonicity: 5.1,
+                modulationIndex: 32,
+                resonance: 4000,
+                octaves: 1.5,
+                volume: -6
             }).connect(instrumentsGain),
 
             bass808: new Tone.MembraneSynth({
@@ -563,80 +555,19 @@ export const getInstruments = () => {
 };
 
 /**
- * Wait for all Tone.Sampler instruments to be loaded
- * Call this BEFORE running any code that uses samplers
- * Returns a promise that resolves when ALL samplers are ready
+ * Wait for all instruments to be ready
+ * Since we now use synth-based instruments, this resolves immediately
+ * Kept for API compatibility
  */
 export const waitForSamplersLoaded = async (): Promise<void> => {
     if (samplersLoaded) return;
     
-    if (samplersLoadingPromise) {
-        return samplersLoadingPromise;
-    }
-    
-    const instruments = getInstruments();
-    
-    // List of all sampler instruments that need to load
-    const samplers: Tone.Sampler[] = [
-        instruments.kick,
-        instruments.snare,
-        instruments.hihat,
-        instruments.clap,
-        instruments.tom,
-        instruments.bass,
-        instruments.pluck,
-        instruments.strings,
-        instruments.piano,
-        instruments.cymbal,
-    ];
-    
-    samplersLoadingPromise = new Promise<void>((resolve) => {
-        let loadedCount = 0;
-        const totalCount = samplers.length;
-        
-        const checkAllLoaded = () => {
-            loadedCount++;
-            console.log(`🎹 Sampler loaded: ${loadedCount}/${totalCount}`);
-            if (loadedCount >= totalCount) {
-                samplersLoaded = true;
-                console.log('✅ All samplers loaded!');
-                resolve();
-            }
-        };
-        
-        // Check each sampler - if already loaded, count it
-        // Otherwise wait for it
-        for (const sampler of samplers) {
-            if (sampler.loaded) {
-                checkAllLoaded();
-            } else {
-                // Poll until loaded (Tone.Sampler doesn't have a reliable onload after construction)
-                const checkLoaded = setInterval(() => {
-                    if (sampler.loaded) {
-                        clearInterval(checkLoaded);
-                        checkAllLoaded();
-                    }
-                }, 30); // Check more frequently
-                
-                // Timeout after 8 seconds
-                setTimeout(() => {
-                    clearInterval(checkLoaded);
-                    if (!sampler.loaded) {
-                        console.warn('⚠️ Sampler load timeout, continuing anyway');
-                        checkAllLoaded();
-                    }
-                }, 8000);
-            }
-        }
-        
-        // If all already loaded, resolve immediately
-        if (loadedCount >= totalCount) {
-            samplersLoaded = true;
-            resolve();
-        }
-    });
-    
-    return samplersLoadingPromise;
+    // With synth-based instruments, we're ready immediately
+    // Just ensure instruments are initialized
+    getInstruments();
+    samplersLoaded = true;
+    console.log('✅ All synth instruments ready!');
+    return Promise.resolve();
 };
 
 export const getEffects = () => {
