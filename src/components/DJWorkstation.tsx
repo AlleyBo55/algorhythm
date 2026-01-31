@@ -1,13 +1,13 @@
 'use client';
 
 import { memo, Suspense, lazy } from 'react';
-import { DeckComponent } from './Deck';
-import { MixerComponent } from './Mixer';
+import { Deck } from './deck';
+import { Mixer } from './mixer';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import { useDJ } from '@/hooks/useDJ';
 
-const Visualizer = lazy(() => import('./Visualizer').then(m => ({ default: m.Visualizer })));
-const PerformanceDashboard = lazy(() => import('./PerformanceDashboard'));
+const Visualizer = lazy(() => import('./visualizers').then(m => ({ default: m.Visualizer })));
+const PerformanceDashboard = lazy(() => import('./dashboard/PerformanceDashboard'));
 
 export const DJWorkstation = memo(function DJWorkstation() {
   const { togglePlay, stop } = useDJ();
@@ -31,15 +31,15 @@ export const DJWorkstation = memo(function DJWorkstation() {
 
       {/* Main: Decks + Mixer */}
       <div className="flex-1 grid grid-cols-[1fr_280px_1fr] gap-4 min-h-0">
-        <DeckComponent id="A" />
-        <MixerComponent />
-        <DeckComponent id="B" />
+        <Deck id="A" />
+        <Mixer />
+        <Deck id="B" />
       </div>
 
       {/* Secondary Decks */}
       <div className="grid grid-cols-2 gap-4 h-44">
-        <DeckComponent id="C" small />
-        <DeckComponent id="D" small />
+        <Deck id="C" small />
+        <Deck id="D" small />
       </div>
 
       <Suspense fallback={null}>
