@@ -12,7 +12,7 @@ export default function AIPage() {
       <section className="space-y-6">
         <h2 className="text-2xl font-semibold text-white">Setup</h2>
         <p className="text-zinc-400">
-          The AI Assistant supports multiple providers. You'll need an API key from one of:
+          The AI Assistant supports multiple providers. You&apos;ll need an API key from one of:
         </p>
         
         <div className="grid gap-3">
@@ -46,16 +46,16 @@ export default function AIPage() {
         
         <div className="space-y-4">
           <Tip title="Be Specific">
-            Instead of "make a beat", try "create a 128 BPM house beat with a four-on-the-floor kick pattern"
+            Instead of &quot;make a beat&quot;, try &quot;create a 128 BPM house beat with a four-on-the-floor kick pattern&quot;
           </Tip>
           <Tip title="Reference Styles">
-            Mention artists or genres: "create a Daft Punk style disco beat" or "make a trap hi-hat pattern"
+            Mention artists or genres: &quot;create a Daft Punk style disco beat&quot; or &quot;make a trap hi-hat pattern&quot;
           </Tip>
           <Tip title="Iterate">
-            Start simple and ask for modifications: "add a snare on beats 2 and 4" or "make the hi-hats faster"
+            Start simple and ask for modifications: &quot;add a snare on beats 2 and 4&quot; or &quot;make the hi-hats faster&quot;
           </Tip>
           <Tip title="Use Context">
-            The AI can see your current code. Ask it to "add a bassline to this" or "make the drop more intense"
+            The AI can see your current code. Ask it to &quot;add a bassline to this&quot; or &quot;make the drop more intense&quot;
           </Tip>
         </div>
       </section>
@@ -114,7 +114,7 @@ function Tip({ title, children }: { title: string; children: React.ReactNode }) 
 function ExamplePrompt({ children }: { children: string }) {
   return (
     <div className="p-3 rounded-lg bg-zinc-900 border border-zinc-800 text-sm text-zinc-300">
-      "{children}"
+      &quot;{children}&quot;
     </div>
   );
 }
