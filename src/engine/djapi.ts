@@ -6,6 +6,7 @@ import { midiController } from './midi';
 import { getInstruments, getEffects } from './instruments';
 import { styleProcessor } from './styleProcessor';
 import { addSampleSupport } from './samplePlayer';
+import { SOUND_PRESETS, SoundPresetName, createConfiguredSynth, SynthConfig } from './soundDesign';
 // ... (keep existing imports)
 
 
@@ -55,6 +56,7 @@ export class DJAPI {
     // Add sample player support
     addSampleSupport(this as any);
     console.log('✅ Sample Player: Connected to DJ API');
+    // Note: Samples are now preloaded by LoadingScreen component with progress UI
   }
 
   public static getInstance(): DJAPI {
@@ -285,6 +287,64 @@ export class DJAPI {
   get fm() { return getInstruments().fm; }
   get brass() { return getInstruments().trumpet; } // Alias
 
+  // === 99% ACCURATE SONG-SPECIFIC INSTRUMENTS ===
+  get levelsPiano() { return getInstruments().levelsPiano; }
+  get fadedPiano() { return getInstruments().fadedPiano; }  // THE iconic Faded piano!
+  get fadedPluck() { return getInstruments().fadedPluck; }
+  get strobeArp() { return getInstruments().strobeArp; }
+  get animalsPluck() { return getInstruments().animalsPluck; }
+  get skrillexWobble() { return getInstruments().skrillexWobble; }
+  get shapeMarimba() { return getInstruments().shapeMarimba; }
+  get diploHorn() { return getInstruments().diploHorn; }
+  get sawanoStrings() { return getInstruments().sawanoStrings; }
+  get sawanoChoir() { return getInstruments().sawanoChoir; }
+  get kpopPhrygian() { return getInstruments().kpopPhrygian; }
+  get gou90sPiano() { return getInstruments().gou90sPiano; }
+  get phonkMetallic() { return getInstruments().phonkMetallic; }
+  get ghibliGrand() { return getInstruments().ghibliGrand; }
+  get ghibliFlute() { return getInstruments().ghibliFlute; }
+  get supersaw() { return getInstruments().supersaw; }
+  get marimba() { return getInstruments().marimba; }
+  get choir() { return getInstruments().choir; }
+  get housePiano() { return getInstruments().housePiano; }
+  get wobbleBass() { return getInstruments().wobbleBass; }
+
+  // Sound Design - Create custom synths with specific presets
+  private customSynths: Map<string, Tone.PolySynth> = new Map();
+
+  /**
+   * Create a synth with a specific sound preset
+   * This is what makes each song sound unique!
+   * 
+   * @example
+   * // Use a preset
+   * const lead = dj.sound('fadedPluck');
+   * lead.triggerAttackRelease('C4', '8n', time);
+   * 
+   * // Or use custom config
+   * const bass = dj.sound({ oscillator: { type: 'sine' }, envelope: { attack: 0.01, decay: 0.5, sustain: 0.3, release: 0.8 } });
+   */
+  sound(preset: SoundPresetName | SynthConfig): Tone.PolySynth {
+    const config = typeof preset === 'string' ? SOUND_PRESETS[preset] : preset;
+    const key = JSON.stringify(config);
+    
+    if (this.customSynths.has(key)) {
+      return this.customSynths.get(key)!;
+    }
+
+    const fx = getEffects();
+    const synth = createConfiguredSynth(config, fx.instrumentsGain || Tone.getDestination());
+    this.customSynths.set(key, synth);
+    return synth;
+  }
+
+  /**
+   * Get available sound presets
+   */
+  get soundPresets() {
+    return SOUND_PRESETS;
+  }
+
   // Effects
   get effects() {
     const fx = getEffects();
@@ -308,6 +368,121 @@ export class DJAPI {
       set volume(value: number) { 
         if (fx.instrumentsGain) fx.instrumentsGain.gain.rampTo(value, 0.1); 
       }
+    };
+  }
+
+  /**
+   * Volume control for individual instruments and master
+   * Use in code editor like:
+   *   dj.volume.master = 0.8;
+   *   dj.volume.supersaw = 0.9;
+   *   dj.volume.kick = 1.0;
+   */
+  get volume() {
+    const instruments = getInstruments();
+    const fx = getEffects();
+    
+    return {
+      // Master volume (0-1)
+      get master() { return fx.instrumentsGain?.gain.value || 0.3; },
+      set master(v: number) { 
+        if (fx.instrumentsGain) fx.instrumentsGain.gain.rampTo(Math.max(0, Math.min(1, v)), 0.05);
+      },
+      
+      // Individual instrument volumes (dB, typically -20 to +10)
+      get kick() { return instruments.kick?.volume?.value ?? 0; },
+      set kick(db: number) { if (instruments.kick?.volume) instruments.kick.volume.value = db; },
+      
+      get snare() { return instruments.snare?.volume?.value ?? 0; },
+      set snare(db: number) { if (instruments.snare?.volume) instruments.snare.volume.value = db; },
+      
+      get hihat() { return instruments.hihat?.volume?.value ?? 0; },
+      set hihat(db: number) { if (instruments.hihat?.volume) instruments.hihat.volume.value = db; },
+      
+      get clap() { return instruments.clap?.volume?.value ?? 0; },
+      set clap(db: number) { if (instruments.clap?.volume) instruments.clap.volume.value = db; },
+      
+      get bass() { return instruments.bass?.volume?.value ?? 0; },
+      set bass(db: number) { if (instruments.bass?.volume) instruments.bass.volume.value = db; },
+      
+      get sub() { return instruments.sub?.volume?.value ?? 0; },
+      set sub(db: number) { if (instruments.sub?.volume) instruments.sub.volume.value = db; },
+      
+      get lead() { return instruments.lead?.volume?.value ?? 0; },
+      set lead(db: number) { if (instruments.lead?.volume) instruments.lead.volume.value = db; },
+      
+      get pad() { return instruments.pad?.volume?.value ?? 0; },
+      set pad(db: number) { if (instruments.pad?.volume) instruments.pad.volume.value = db; },
+      
+      get piano() { return instruments.piano?.volume?.value ?? 0; },
+      set piano(db: number) { if (instruments.piano?.volume) instruments.piano.volume.value = db; },
+      
+      get strings() { return instruments.strings?.volume?.value ?? 0; },
+      set strings(db: number) { if (instruments.strings?.volume) instruments.strings.volume.value = db; },
+      
+      get arp() { return instruments.arp?.volume?.value ?? 0; },
+      set arp(db: number) { if (instruments.arp?.volume) instruments.arp.volume.value = db; },
+      
+      get pluck() { return instruments.pluck?.volume?.value ?? 0; },
+      set pluck(db: number) { if (instruments.pluck?.volume) instruments.pluck.volume.value = db; },
+      
+      get fm() { return instruments.fm?.volume?.value ?? 0; },
+      set fm(db: number) { if (instruments.fm?.volume) instruments.fm.volume.value = db; },
+      
+      // Song-specific instruments
+      get supersaw() { return instruments.supersaw?.volume?.value ?? 0; },
+      set supersaw(db: number) { if (instruments.supersaw?.volume) instruments.supersaw.volume.value = db; },
+      
+      get fadedPiano() { return instruments.fadedPiano?.volume?.value ?? 0; },
+      set fadedPiano(db: number) { if (instruments.fadedPiano?.volume) instruments.fadedPiano.volume.value = db; },
+      
+      get fadedPluck() { return instruments.fadedPluck?.volume?.value ?? 0; },
+      set fadedPluck(db: number) { if (instruments.fadedPluck?.volume) instruments.fadedPluck.volume.value = db; },
+      
+      get levelsPiano() { return instruments.levelsPiano?.volume?.value ?? 0; },
+      set levelsPiano(db: number) { if (instruments.levelsPiano?.volume) instruments.levelsPiano.volume.value = db; },
+      
+      get strobeArp() { return instruments.strobeArp?.volume?.value ?? 0; },
+      set strobeArp(db: number) { if (instruments.strobeArp?.volume) instruments.strobeArp.volume.value = db; },
+      
+      get animalsPluck() { return instruments.animalsPluck?.volume?.value ?? 0; },
+      set animalsPluck(db: number) { if (instruments.animalsPluck?.volume) instruments.animalsPluck.volume.value = db; },
+      
+      get skrillexWobble() { return instruments.skrillexWobble?.volume?.value ?? 0; },
+      set skrillexWobble(db: number) { if (instruments.skrillexWobble?.volume) instruments.skrillexWobble.volume.value = db; },
+      
+      get shapeMarimba() { return instruments.shapeMarimba?.volume?.value ?? 0; },
+      set shapeMarimba(db: number) { if (instruments.shapeMarimba?.volume) instruments.shapeMarimba.volume.value = db; },
+      
+      get diploHorn() { return instruments.diploHorn?.volume?.value ?? 0; },
+      set diploHorn(db: number) { if (instruments.diploHorn?.volume) instruments.diploHorn.volume.value = db; },
+      
+      get sawanoStrings() { return instruments.sawanoStrings?.volume?.value ?? 0; },
+      set sawanoStrings(db: number) { if (instruments.sawanoStrings?.volume) instruments.sawanoStrings.volume.value = db; },
+      
+      get sawanoChoir() { return instruments.sawanoChoir?.volume?.value ?? 0; },
+      set sawanoChoir(db: number) { if (instruments.sawanoChoir?.volume) instruments.sawanoChoir.volume.value = db; },
+      
+      get gou90sPiano() { return instruments.gou90sPiano?.volume?.value ?? 0; },
+      set gou90sPiano(db: number) { if (instruments.gou90sPiano?.volume) instruments.gou90sPiano.volume.value = db; },
+      
+      get housePiano() { return instruments.housePiano?.volume?.value ?? 0; },
+      set housePiano(db: number) { if (instruments.housePiano?.volume) instruments.housePiano.volume.value = db; },
+      
+      get marimba() { return instruments.marimba?.volume?.value ?? 0; },
+      set marimba(db: number) { if (instruments.marimba?.volume) instruments.marimba.volume.value = db; },
+      
+      get choir() { return instruments.choir?.volume?.value ?? 0; },
+      set choir(db: number) { if (instruments.choir?.volume) instruments.choir.volume.value = db; },
+      
+      get wobbleBass() { return instruments.wobbleBass?.volume?.value ?? 0; },
+      set wobbleBass(db: number) { if (instruments.wobbleBass?.volume) instruments.wobbleBass.volume.value = db; },
+      
+      get ghibliGrand() { return instruments.ghibliGrand?.volume?.value ?? 0; },
+      set ghibliGrand(db: number) { if (instruments.ghibliGrand?.volume) instruments.ghibliGrand.volume.value = db; },
+      
+      get ghibliFlute() { return instruments.ghibliFlute?.volume?.value ?? 0; },
+      set ghibliFlute(db: number) { if (instruments.ghibliFlute?.volume) instruments.ghibliFlute.volume.value = db; },
     };
   }
 

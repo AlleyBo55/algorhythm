@@ -1,155 +1,482 @@
-import { Template } from '../templates';
+// Alan Walker Templates
+// Melodic progressive house with signature reverb/delay sound
 
-export const alan_walker_faded: Template = {
-  id: 'alan_walker_faded',
+import type { DJTemplate } from './types';
+
+/**
+ * Faded Style - Alan Walker's breakthrough hit
+ * 90 BPM, F# minor, emotional atmosphere
+ */
+export const fadedStyle: DJTemplate = {
+  id: 'alan-walker-faded',
   name: 'Faded Style',
-  persona: 'Alan Walker',
-  description: 'Melodic future bass - adds signature reverb, delay, and emotional atmosphere',
-  code: `// ALAN WALKER - Faded Style
-// Transforms tracks + adds signature flavor
-dj.bpm = 90;
-
-const chords = [
-  ['F#3', 'A3', 'C#4'], // F#m
-  ['D3', 'F#3', 'A3'],  // D
-  ['A3', 'C#4', 'E4'],  // A
-  ['E3', 'G#3', 'B3']   // E
-];
-
-const melody = ['C#5', 'B4', 'A4', 'F#4', 'E4', 'F#4', 'A4', 'B4'];
-let tick = 0;
-
-dj.loop('16n', (time) => {
-  const bar = Math.floor(tick / 16);
-  const beat = tick % 16;
+  artist: 'Alan Walker',
+  genre: 'Progressive House',
+  bpm: 90,
+  key: 'F# minor',
   
-  // === UNIFIED STYLE + FLAVOR ===
-  // Original track stays at full volume
-  dj.deck.A.eq.high = 0;
-  dj.deck.A.eq.mid = 0;
-  dj.deck.A.eq.low = 0;
-  dj.deck.A.filter.cutoff = 20000;
+  energy: 0.7,
+  danceability: 0.75,
+  valence: 0.4, // Melancholic
   
-  // Instruments at 30% (subtle layer)
-  dj.instruments.volume = 0.3;
+  trueRemix: {
+    enabled: true,
+    intensity: 0,
+    style: 'melodic-progressive',
+    transitions: [
+      {
+        type: 'filter-sweep',
+        duration: 8,
+        energy: 0.8,
+      },
+      {
+        type: 'reverb-build',
+        duration: 4,
+        energy: 0.9,
+      },
+    ],
+    progression: {
+      introLength: 4,
+      buildLength: 8,
+      dropBar: 16,
+    },
+  },
   
-  // Add reverb effect
-  if (bar === 0 && beat === 0) {
-    dj.deck.A.effects.add('reverb', 'reverb');
-    const rev = dj.deck.A.effects.get('reverb');
-    if (rev) rev.wet = 0.4;
-    
-    dj.deck.A.effects.add('delay', 'delay');
-    const del = dj.deck.A.effects.get('delay');
-    if (del) del.wet = 0.2;
-  }
+  instruments: [
+    {
+      name: 'kick',
+      type: 'kick',
+      sound: 'deep-house-kick',
+      pattern: 'four-on-floor',
+      volume: 0.8,
+      frequencyProfile: { bass: true, mid: false, high: false },
+    },
+    {
+      name: 'pluck-lead',
+      type: 'pluck',
+      sound: 'clean-pluck',
+      pattern: 'melodic-arp',
+      volume: 0.7,
+      effects: ['reverb', 'delay'],
+      frequencyProfile: { bass: false, mid: true, high: true },
+    },
+    {
+      name: 'atmospheric-pad',
+      type: 'pad',
+      sound: 'warm-pad',
+      pattern: 'sustained-chords',
+      volume: 0.5,
+      effects: ['reverb'],
+      frequencyProfile: { bass: false, mid: true, high: false },
+    },
+    {
+      name: 'bass',
+      type: 'bass',
+      sound: 'sub-bass',
+      pattern: 'root-notes',
+      volume: 0.75,
+      frequencyProfile: { bass: true, mid: false, high: false },
+    },
+  ],
   
-  // Build-up filter sweep (bars 6-8)
-  if (bar >= 6 && bar < 8) {
-    const progress = (bar - 6) / 2;
-    dj.deck.A.filter.cutoff = 500 + (progress * 19500);
-    dj.deck.A.colorFX.value = progress * 0.5;
-  }
+  effects: {
+    reverb: {
+      type: 'hall',
+      size: 2.5,
+      decay: 3.5,
+      mix: 0.4,
+    },
+    delay: {
+      time: '1/4',
+      feedback: 0.4,
+      mix: 0.3,
+    },
+    filter: {
+      type: 'lowpass',
+      cutoff: 2000,
+      resonance: 0.3,
+      automation: 'slow-open',
+    },
+  },
   
-  // === LAYERED INSTRUMENTS (R2 SAMPLES) ===
-  // Kick pattern (drop) with sidechain
-  if (bar >= 8 && tick % 4 === 0) {
-    dj.sample('drums/kick-1', time);
-    dj.sidechain('8n');
-  }
-  
-  // Signature pluck melody
-  if (tick % 2 === 0) {
-    dj.sample('synth/pluck-1', time);
-  }
-  
-  // Emotional pad progression
-  if (beat === 0) {
-    dj.sample('synth/pad-1', time);
-  }
-  
-  // Hi-hat pattern
-  if (bar >= 8 && tick % 2 === 1) {
-    dj.sample('drums/hihat-1', time);
-  }
-  
-  // Clap on 2 and 4
-  if (bar >= 8 && [8, 24].includes(beat)) {
-    dj.sample('drums/clap-1', time);
-  }
-  
-  tick++;
-});`
+  mix: {
+    masterVolume: 0.85,
+    compression: {
+      threshold: -12,
+      ratio: 4,
+      attack: 0.01,
+      release: 0.15,
+    },
+  },
 };
 
-export const alan_walker_alone: Template = {
-  id: 'alan_walker_alone',
+/**
+ * Alone Style - Uplifting progressive house
+ * 120 BPM, uplifting energy
+ */
+export const aloneStyle: DJTemplate = {
+  id: 'alan-walker-alone',
   name: 'Alone Style',
-  persona: 'Alan Walker',
-  description: 'Uplifting progressive house - adds vocal chops, bass wobble, and energy',
-  code: `// ALAN WALKER - Alone Style
-// Transforms tracks + adds signature flavor
-dj.bpm = 120;
-
-const vocalChops = ['C5', 'D5', 'E5', 'G5'];
-let tick = 0;
-
-dj.loop('16n', (time) => {
-  const bar = Math.floor(tick / 16);
-  const beat = tick % 16;
+  artist: 'Alan Walker',
+  genre: 'Progressive House',
+  bpm: 120,
+  key: 'C minor',
   
-  // === UNIFIED STYLE + FLAVOR ===
-  dj.deck.A.eq.high = 2;
-  dj.deck.A.eq.mid = 0;
-  dj.deck.A.eq.low = 3;
-  dj.deck.A.filter.cutoff = 20000;
+  energy: 0.8,
+  danceability: 0.8,
+  valence: 0.6,
   
-  // Add chorus for width
-  if (bar === 0 && beat === 0) {
-    dj.deck.A.effects.add('chorus', 'chorus');
-    const cho = dj.deck.A.effects.get('chorus');
-    if (cho) cho.wet = 0.3;
-  }
+  trueRemix: {
+    enabled: true,
+    intensity: 0,
+    style: 'melodic-progressive',
+    transitions: [
+      {
+        type: 'filter-sweep',
+        duration: 8,
+        energy: 0.85,
+      },
+    ],
+    progression: {
+      introLength: 4,
+      buildLength: 8,
+      dropBar: 16,
+    },
+  },
   
-  // === LAYERED INSTRUMENTS (R2 SAMPLES) ===
-  if (bar >= 8) {
-    // Kick with sidechain
-    if (tick % 4 === 0) {
-      dj.sample('drums/kick-2', time);
-      dj.sidechain('8n');
-    }
-    
-    // Signature bass wobble
-    if (tick % 8 === 0) {
-      dj.sample('bass/sub-1', time);
-    }
-    
-    // Vocal chops
-    if ([0, 6, 12].includes(beat)) {
-      dj.sample('vocals/chops-1', time);
-    }
-    
-    // Supersaw lead
-    if (beat === 0) {
-      dj.sample('synth/lead-1', time);
-    }
-  }
+  instruments: [
+    {
+      name: 'kick',
+      type: 'kick',
+      sound: 'punchy-kick',
+      pattern: 'four-on-floor',
+      volume: 0.85,
+      frequencyProfile: { bass: true, mid: false, high: false },
+    },
+    {
+      name: 'synth-lead',
+      type: 'lead',
+      sound: 'bright-synth',
+      pattern: 'uplifting-melody',
+      volume: 0.75,
+      effects: ['reverb', 'delay'],
+      frequencyProfile: { bass: false, mid: true, high: true },
+    },
+    {
+      name: 'pad',
+      type: 'pad',
+      sound: 'lush-pad',
+      pattern: 'chord-progression',
+      volume: 0.6,
+      effects: ['reverb'],
+      frequencyProfile: { bass: false, mid: true, high: false },
+    },
+  ],
   
-  // Build-up (bars 6-8)
-  if (bar >= 6 && bar < 8) {
-    // Snare roll
-    if (tick % 2 === 0) {
-      dj.sample('drums/snare-1', time);
-    }
-    // Filter sweep
-    dj.deck.A.filter.cutoff = 500 + ((bar - 6) * 10000);
-  }
+  effects: {
+    reverb: {
+      type: 'hall',
+      size: 2.0,
+      decay: 3.0,
+      mix: 0.35,
+    },
+    delay: {
+      time: '1/8',
+      feedback: 0.35,
+      mix: 0.25,
+    },
+  },
   
-  // Hi-hats throughout
-  if (bar >= 8 && tick % 2 === 1) {
-    dj.sample('drums/hihat-2', time);
-  }
-  
-  tick++;
-});`
+  mix: {
+    masterVolume: 0.85,
+    compression: {
+      threshold: -10,
+      ratio: 4,
+      attack: 0.01,
+      release: 0.15,
+    },
+  },
 };
+
+/**
+ * Darkside Style - Collaboration feel with Au/Ra
+ * 95 BPM, darker atmosphere
+ */
+export const darksideStyle: DJTemplate = {
+  id: 'alan-walker-darkside',
+  name: 'Darkside Style',
+  artist: 'Alan Walker',
+  genre: 'Progressive House',
+  bpm: 95,
+  key: 'G minor',
+  
+  energy: 0.75,
+  danceability: 0.7,
+  valence: 0.35,
+  
+  trueRemix: {
+    enabled: true,
+    intensity: 0,
+    style: 'melodic-progressive',
+    transitions: [
+      {
+        type: 'reverb-build',
+        duration: 6,
+        energy: 0.8,
+      },
+    ],
+    progression: {
+      introLength: 4,
+      buildLength: 8,
+      dropBar: 16,
+    },
+  },
+  
+  instruments: [
+    {
+      name: 'kick',
+      type: 'kick',
+      sound: 'deep-kick',
+      pattern: 'four-on-floor',
+      volume: 0.8,
+      frequencyProfile: { bass: true, mid: false, high: false },
+    },
+    {
+      name: 'dark-pluck',
+      type: 'pluck',
+      sound: 'dark-pluck',
+      pattern: 'minor-melody',
+      volume: 0.7,
+      effects: ['reverb', 'delay'],
+      frequencyProfile: { bass: false, mid: true, high: false },
+    },
+    {
+      name: 'vocal-chop',
+      type: 'vocal-chop',
+      sound: 'processed-vocal',
+      pattern: 'rhythmic-chops',
+      volume: 0.6,
+      effects: ['reverb'],
+      frequencyProfile: { bass: false, mid: true, high: true },
+    },
+  ],
+  
+  effects: {
+    reverb: {
+      type: 'chamber',
+      size: 2.2,
+      decay: 3.2,
+      mix: 0.4,
+    },
+    delay: {
+      time: '1/4',
+      feedback: 0.4,
+      mix: 0.3,
+    },
+  },
+  
+  mix: {
+    masterVolume: 0.85,
+    compression: {
+      threshold: -12,
+      ratio: 4,
+      attack: 0.01,
+      release: 0.15,
+    },
+  },
+};
+
+/**
+ * On My Way Style - Festival energy
+ * 128 BPM, high energy
+ */
+export const onMyWayStyle: DJTemplate = {
+  id: 'alan-walker-on-my-way',
+  name: 'On My Way Style',
+  artist: 'Alan Walker',
+  genre: 'Progressive House',
+  bpm: 128,
+  key: 'D minor',
+  
+  energy: 0.85,
+  danceability: 0.85,
+  valence: 0.7,
+  
+  trueRemix: {
+    enabled: true,
+    intensity: 0,
+    style: 'melodic-progressive',
+    transitions: [
+      {
+        type: 'filter-sweep',
+        duration: 8,
+        energy: 0.9,
+      },
+      {
+        type: 'drop',
+        duration: 1,
+        energy: 1.0,
+      },
+    ],
+    progression: {
+      introLength: 4,
+      buildLength: 8,
+      dropBar: 16,
+    },
+  },
+  
+  instruments: [
+    {
+      name: 'kick',
+      type: 'kick',
+      sound: 'festival-kick',
+      pattern: 'four-on-floor',
+      volume: 0.9,
+      frequencyProfile: { bass: true, mid: false, high: false },
+    },
+    {
+      name: 'energetic-lead',
+      type: 'lead',
+      sound: 'festival-lead',
+      pattern: 'anthem-melody',
+      volume: 0.8,
+      effects: ['reverb', 'delay'],
+      frequencyProfile: { bass: false, mid: true, high: true },
+    },
+    {
+      name: 'power-bass',
+      type: 'bass',
+      sound: 'powerful-bass',
+      pattern: 'driving-bass',
+      volume: 0.8,
+      frequencyProfile: { bass: true, mid: false, high: false },
+    },
+  ],
+  
+  effects: {
+    reverb: {
+      type: 'hall',
+      size: 2.8,
+      decay: 3.5,
+      mix: 0.35,
+    },
+    delay: {
+      time: '1/8',
+      feedback: 0.3,
+      mix: 0.25,
+    },
+  },
+  
+  mix: {
+    masterVolume: 0.9,
+    compression: {
+      threshold: -10,
+      ratio: 4,
+      attack: 0.01,
+      release: 0.15,
+    },
+  },
+};
+
+/**
+ * The Spectre Style - Mysterious atmosphere
+ * 128 BPM, mysterious vibe
+ */
+export const spectreStyle: DJTemplate = {
+  id: 'alan-walker-spectre',
+  name: 'The Spectre Style',
+  artist: 'Alan Walker',
+  genre: 'Progressive House',
+  bpm: 128,
+  key: 'A minor',
+  
+  energy: 0.8,
+  danceability: 0.75,
+  valence: 0.5,
+  
+  trueRemix: {
+    enabled: true,
+    intensity: 0,
+    style: 'melodic-progressive',
+    transitions: [
+      {
+        type: 'filter-sweep',
+        duration: 10,
+        energy: 0.85,
+      },
+    ],
+    progression: {
+      introLength: 4,
+      buildLength: 10,
+      dropBar: 16,
+    },
+  },
+  
+  instruments: [
+    {
+      name: 'kick',
+      type: 'kick',
+      sound: 'tight-kick',
+      pattern: 'four-on-floor',
+      volume: 0.85,
+      frequencyProfile: { bass: true, mid: false, high: false },
+    },
+    {
+      name: 'mysterious-pluck',
+      type: 'pluck',
+      sound: 'mysterious-pluck',
+      pattern: 'haunting-melody',
+      volume: 0.75,
+      effects: ['reverb', 'delay'],
+      frequencyProfile: { bass: false, mid: true, high: true },
+    },
+    {
+      name: 'atmospheric-pad',
+      type: 'pad',
+      sound: 'dark-pad',
+      pattern: 'ambient-texture',
+      volume: 0.55,
+      effects: ['reverb'],
+      frequencyProfile: { bass: false, mid: true, high: false },
+    },
+  ],
+  
+  effects: {
+    reverb: {
+      type: 'hall',
+      size: 3.0,
+      decay: 4.0,
+      mix: 0.45,
+    },
+    delay: {
+      time: '1/4',
+      feedback: 0.45,
+      mix: 0.35,
+    },
+    filter: {
+      type: 'lowpass',
+      cutoff: 1500,
+      resonance: 0.4,
+      automation: 'slow-open',
+    },
+  },
+  
+  mix: {
+    masterVolume: 0.85,
+    compression: {
+      threshold: -12,
+      ratio: 4,
+      attack: 0.01,
+      release: 0.15,
+    },
+  },
+};
+
+// Export all templates
+export const alanWalkerTemplates = [
+  fadedStyle,
+  aloneStyle,
+  darksideStyle,
+  onMyWayStyle,
+  spectreStyle,
+];

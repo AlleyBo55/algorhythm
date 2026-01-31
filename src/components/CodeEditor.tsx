@@ -5,128 +5,181 @@ import Editor, { Monaco } from '@monaco-editor/react';
 import { editor } from 'monaco-editor';
 import { dj } from '@/engine/djapi';
 import { audioEngine } from '@/engine/audio';
-import { AIAssistant } from './AIAssistant';
-import { Play, Square, Save, FolderOpen, Undo, Redo, Settings, Code2, Search, FileText } from 'lucide-react';
+import { preloadSamplesFromCode, ALL_SAMPLES } from '@/engine/sampleCache';
+import { waitForSamplersLoaded } from '@/engine/instruments';
+import { nativeAudio } from '@/engine/nativeAudio';
+import { cn } from './ui/Button';
+import { CompilationOverlay, PlaybackStartEffect, LiveIndicator, type CompilationPhase } from './CompilationOverlay';
 
 type IStandaloneCodeEditor = editor.IStandaloneCodeEditor;
 
 export const CodeEditorPanel = memo(function CodeEditorPanel() {
-  const [code, setCode] = useState(getStarterCode());
+  const [code, setCode] = useState(STARTER_CODE);
   const [isRunning, setIsRunning] = useState(false);
+  const [isCompiling, setIsCompiling] = useState(false);
+  const [compilePhase, setCompilePhase] = useState<CompilationPhase>('analyzing');
+  const [compileProgress, setCompileProgress] = useState(0);
+  const [compileMessage, setCompileMessage] = useState('');
+  const [showPlaybackEffect, setShowPlaybackEffect] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fontSize, setFontSize] = useState(14);
-  const [showSettings, setShowSettings] = useState(false);
-  const [theme, setTheme] = useState<'vs-dark' | 'light'>('vs-dark');
-  const [minimap, setMinimap] = useState(true);
   const editorRef = useRef<IStandaloneCodeEditor | null>(null);
-  const monacoRef = useRef<Monaco | null>(null);
 
-  const handleEditorDidMount = useCallback((editor: IStandaloneCodeEditor, monaco: Monaco) => {
+  const handleEditorMount = useCallback((editor: IStandaloneCodeEditor, monaco: Monaco) => {
     editorRef.current = editor;
-    monacoRef.current = monaco;
 
-    // Register custom language features for Algorhythm
+    // Custom completions
     monaco.languages.registerCompletionItemProvider('typescript', {
-      provideCompletionItems: (model: any, position: any) => {
-        const suggestions: any[] = [
-          // DJ API completions
+      provideCompletionItems: () => ({
+        suggestions: [
           {
             label: 'dj.bpm',
             kind: monaco.languages.CompletionItemKind.Property,
             insertText: 'dj.bpm = ${1:128};',
             insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-            documentation: 'Set global BPM (beats per minute)'
+            documentation: 'Set global BPM',
           },
           {
             label: 'dj.loop',
             kind: monaco.languages.CompletionItemKind.Function,
-            insertText: 'dj.loop(\'${1:16n}\', (time) => {\n\t${2}\n});',
+            insertText: "dj.loop('${1:16n}', (time) => {\n\t${2}\n});",
             insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-            documentation: 'Create a timed loop'
+            documentation: 'Create a timed loop',
           },
           {
-            label: 'dj.deck.A.load',
+            label: 'dj.kick',
             kind: monaco.languages.CompletionItemKind.Method,
-            insertText: 'await dj.deck.A.load(\'${1:/audio/track.mp3}\');',
+            insertText: "dj.kick.triggerAttackRelease('${1:C1}', '${2:8n}', time);",
             insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-            documentation: 'Load audio file into deck A'
+            documentation: 'Trigger kick drum',
           },
           {
-            label: 'dj.deck.A.play',
+            label: 'dj.sample',
             kind: monaco.languages.CompletionItemKind.Method,
-            insertText: 'dj.deck.A.play();',
-            documentation: 'Start playing deck A'
-          },
-          {
-            label: 'dj.kick.triggerAttackRelease',
-            kind: monaco.languages.CompletionItemKind.Method,
-            insertText: 'dj.kick.triggerAttackRelease(\'${1:C1}\', \'${2:8n}\', time);',
+            insertText: "dj.sample('${1:drums/kick-1}', { time });",
             insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-            documentation: 'Trigger kick drum'
+            documentation: 'Play a sample from CDN',
           },
-          {
-            label: 'dj.effects.reverb.set',
-            kind: monaco.languages.CompletionItemKind.Method,
-            insertText: 'dj.effects.reverb.set({ wet: ${1:0.3}, decay: ${2:2.5} });',
-            insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
-            documentation: 'Configure reverb effect'
-          },
-        ];
-        return { suggestions };
-      }
+        ],
+      }),
     });
 
-    // Add keyboard shortcuts
-    editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => {
-      handleRunAndNotify();
-    });
-
-    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => {
-      handleSave();
-    });
+    // Keyboard shortcuts
+    editor.addCommand(monaco.KeyMod.Shift | monaco.KeyCode.Enter, () => handleRun());
+    editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS, () => handleSave());
 
     // Load saved code
-    const saved = localStorage.getItem('algorhythm_saved_code');
-    if (saved && saved !== getStarterCode()) {
-      setCode(saved);
-    }
+    const saved = localStorage.getItem('algorhythm_code');
+    if (saved) setCode(saved);
   }, []);
 
-  const handleRun = useCallback(() => {
+  const handleRun = useCallback(async () => {
     const currentCode = editorRef.current?.getValue() || code;
     try {
       setError(null);
+      setIsCompiling(true);
+      setCompileProgress(0);
+
+      // Phase 1: Initialize Native Audio FIRST (critical!)
+      setCompilePhase('analyzing');
+      setCompileMessage('Initializing audio engine...');
+      setCompileProgress(5);
+      await nativeAudio.init();
+      
+      // Also init Tone.js for synths
+      const Tone = await import('tone');
+      if (Tone.getContext().state !== 'running') {
+        await Tone.start();
+      }
+      await Tone.getContext().resume();
+      setCompileProgress(15);
+
+      // Phase 2: Download samples to cache
+      setCompilePhase('downloading');
+      setCompileMessage('Fetching samples from CDN...');
+      
+      await preloadSamplesFromCode(currentCode, (p) => {
+        const downloadProgress = 15 + (p.loaded / Math.max(p.total, 1)) * 25;
+        setCompileProgress(downloadProgress);
+        setCompileMessage(`Downloading ${p.loaded}/${p.total} samples...`);
+      });
+
+      // Phase 3: Pre-decode ALL samples with Native Audio (INSTANT playback!)
+      setCompilePhase('loading');
+      setCompileMessage('Decoding audio for instant playback...');
+      setCompileProgress(45);
+      
+      await nativeAudio.preDecodeAllSamples(
+        [...ALL_SAMPLES],
+        (loaded, total) => {
+          const decodeProgress = 45 + (loaded / total) * 25;
+          setCompileProgress(decodeProgress);
+          setCompileMessage(`Decoding ${loaded}/${total} samples...`);
+        }
+      );
+
+      // Phase 4: Wait for Tone.js samplers (for synths)
+      setCompileMessage('Loading synthesizers...');
+      setCompileProgress(75);
+      await waitForSamplersLoaded();
+
+      // Phase 5: Warm up audio graph
+      setCompileMessage('Warming up audio engine...');
+      setCompileProgress(85);
+      
+      // Play silent drum hits to warm up native audio
+      nativeAudio.playDrum('kick', { volume: -60 });
+      nativeAudio.playDrum('snare', { volume: -60 });
+      nativeAudio.playDrum('hihat', { volume: -60 });
+      
+      // Warm up synths
+      const inst = (await import('@/engine/instruments')).getInstruments();
+      const warmupTime = Tone.now() + 0.05;
+      try {
+        inst.fadedPiano?.triggerAttackRelease('C4', '32n', warmupTime, 0.001);
+        inst.fadedPluck?.triggerAttackRelease('C4', '32n', warmupTime, 0.001);
+        inst.supersaw?.triggerAttackRelease(['C4'], '32n', warmupTime, 0.001);
+        inst.pad?.triggerAttackRelease(['C4'], '32n', warmupTime, 0.001);
+        inst.sub?.triggerAttackRelease('C2', '32n', warmupTime, 0.001);
+      } catch (e) {
+        // Warmup failed, ok
+      }
+      
+      await new Promise(r => setTimeout(r, 150));
+
+      // Phase 6: Compiling
+      setCompilePhase('compiling');
+      setCompileMessage('Building audio graph...');
+      setCompileProgress(92);
+      await new Promise(r => setTimeout(r, 80));
+
+      // Phase 7: Running
+      setCompilePhase('running');
+      setCompileMessage('Starting playback...');
+      setCompileProgress(96);
+      
       const { runner } = require('@/engine/runner');
       runner.execute(currentCode);
-      setIsRunning(true);
+
+      // Success!
+      setCompilePhase('success');
+      setCompileProgress(100);
+      setCompileMessage('Music is playing!');
+      
+      setTimeout(() => {
+        setIsCompiling(false);
+        setIsRunning(true);
+        setShowPlaybackEffect(true);
+      }, 500);
+
     } catch (err: any) {
+      setCompilePhase('error');
+      setCompileMessage(err?.message || String(err));
       setError(err?.message || String(err));
+      setTimeout(() => {
+        setIsCompiling(false);
+      }, 1500);
     }
   }, [code]);
-
-  // Toast State
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'warning' } | null>(null);
-
-  useEffect(() => {
-    if (toast) {
-      const timer = setTimeout(() => setToast(null), 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [toast]);
-
-  // Extended Run Handler
-  const handleRunAndNotify = useCallback(() => {
-    handleRun();
-    if (!error) {
-      // Simple heuristic: check if any deck has a track
-      const hasTrack = dj.deck.A.duration > 0 || dj.deck.B.duration > 0;
-      if (hasTrack) {
-        setToast({ message: 'Code Executed Successfully', type: 'success' });
-      } else {
-        setToast({ message: 'Code Ran (Warning: No tracks loaded)', type: 'warning' });
-      }
-    }
-  }, [handleRun, error]);
 
   const handleStop = useCallback(() => {
     dj.stop();
@@ -136,326 +189,334 @@ export const CodeEditorPanel = memo(function CodeEditorPanel() {
 
   const handleSave = useCallback(() => {
     const currentCode = editorRef.current?.getValue() || code;
-    localStorage.setItem('algorhythm_saved_code', currentCode);
-    localStorage.setItem('algorhythm_saved_timestamp', Date.now().toString());
+    localStorage.setItem('algorhythm_code', currentCode);
   }, [code]);
 
-  const handleLoad = useCallback(() => {
-    const saved = localStorage.getItem('algorhythm_saved_code');
-    if (saved) {
-      setCode(saved);
-    }
-  }, []);
-
-  const handleFormat = useCallback(() => {
-    editorRef.current?.getAction('editor.action.formatDocument')?.run();
-  }, []);
-
-  const handleFind = useCallback(() => {
-    editorRef.current?.getAction('actions.find')?.run();
-  }, []);
-
-  // Auto-save every 30 seconds
+  // Auto-save
   useEffect(() => {
     const interval = setInterval(() => {
       const currentCode = editorRef.current?.getValue();
-      if (currentCode) {
-        localStorage.setItem('algorhythm_saved_code', currentCode);
-      }
+      if (currentCode) localStorage.setItem('algorhythm_code', currentCode);
     }, 30000);
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="flex flex-col h-full bg-black/40 backdrop-blur-xl rounded-xl border border-white/5 overflow-hidden shadow-2xl">
-      {/* Toolbar */}
-      <div className="flex items-center justify-between p-2 border-b border-white/5 bg-white/[0.02]">
-        <div className="flex items-center gap-3 px-2">
-          <div className="p-1.5 rounded-md bg-blue-500/10 text-blue-400">
-            <Code2 className="w-4 h-4" />
+    <div className="h-full flex flex-col rounded-2xl bg-zinc-900/50 border border-zinc-800/50 overflow-hidden relative backdrop-blur-sm">
+      {/* Compilation Overlay */}
+      {isCompiling && (
+        <CompilationOverlay
+          phase={compilePhase}
+          progress={compileProgress}
+          message={compileMessage}
+          onClose={() => setIsCompiling(false)}
+        />
+      )}
+
+      {/* Playback Start Effect */}
+      {showPlaybackEffect && (
+        <PlaybackStartEffect onComplete={() => setShowPlaybackEffect(false)} />
+      )}
+
+      {/* Header */}
+      <div className="h-14 px-5 flex items-center justify-between border-b border-zinc-800/50 bg-zinc-900/30">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/20 flex items-center justify-center">
+            <svg className="w-4 h-4 text-blue-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M16 18l6-6-6-6M8 6l-6 6 6 6" />
+            </svg>
           </div>
-          <span className="text-xs font-bold tracking-wider text-white/80 uppercase">Editor</span>
+          <div>
+            <span className="text-sm font-medium text-white">Code Editor</span>
+            <span className="text-[10px] text-zinc-500 ml-2 font-mono">TypeScript</span>
+          </div>
         </div>
 
-        <div className="flex items-center gap-1">
-          <ToolbarButton onClick={() => editorRef.current?.trigger('keyboard', 'undo', null)} icon={Undo} tooltip="Undo" />
-          <ToolbarButton onClick={() => editorRef.current?.trigger('keyboard', 'redo', null)} icon={Redo} tooltip="Redo" />
-          <div className="w-px h-4 bg-white/10 mx-1" />
-          <ToolbarButton onClick={handleFind} icon={Search} tooltip="Find" />
-          <ToolbarButton onClick={handleFormat} icon={FileText} tooltip="Format" />
-          <div className="w-px h-4 bg-white/10 mx-1" />
-          <ToolbarButton onClick={handleSave} icon={Save} tooltip="Save" />
-          <ToolbarButton onClick={handleLoad} icon={FolderOpen} tooltip="Load" />
-          <ToolbarButton onClick={() => setShowSettings(!showSettings)} icon={Settings} tooltip="Settings" />
+        <div className="flex items-center gap-3">
+          {isRunning && <LiveIndicator />}
+          <span className="text-[10px] text-zinc-600 font-mono px-2 py-1 rounded bg-zinc-800/50">
+            Ln {editorRef.current?.getPosition()?.lineNumber || 1}
+          </span>
         </div>
       </div>
 
-      {/* Settings Panel */}
-      {showSettings && (
-        <div className="p-4 border-b border-white/5 bg-black/60 space-y-4 animate-accordion-down">
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Font Size</label>
-            <div className="flex items-center gap-3">
-              <input
-                type="range"
-                min="10"
-                max="24"
-                value={fontSize}
-                onChange={(e) => setFontSize(Number(e.target.value))}
-                className="flex-1 h-1 bg-white/10 rounded-full appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary"
-              />
-              <span className="text-xs font-mono w-8 text-right text-white">{fontSize}px</span>
-            </div>
+      {/* Editor */}
+      <div className="flex-1 min-h-0 relative">
+        {/* Running glow effect */}
+        {isRunning && (
+          <div className="absolute inset-0 pointer-events-none z-10">
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent" />
+            <div className="absolute top-0 bottom-0 left-0 w-px bg-gradient-to-b from-transparent via-emerald-500/30 to-transparent" />
+            <div className="absolute top-0 bottom-0 right-0 w-px bg-gradient-to-b from-transparent via-emerald-500/30 to-transparent" />
           </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-[10px] uppercase tracking-wider text-muted-foreground">Theme</label>
-            <select
-              value={theme}
-              onChange={(e) => setTheme(e.target.value as 'vs-dark' | 'light')}
-              className="w-full bg-white/5 border border-white/10 rounded px-2 py-1.5 text-xs text-white focus:outline-none focus:border-primary/50"
-            >
-              <option value="vs-dark">Dark Pro</option>
-              <option value="light">Light (Why?)</option>
-            </select>
-          </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={minimap}
-              onChange={(e) => setMinimap(e.target.checked)}
-              className="rounded border-white/20 bg-white/5 text-primary focus:ring-primary/20"
-            />
-            <label className="text-xs text-white">Show Minimap</label>
-          </div>
-        </div>
-      )}
-
-      {/* Monaco Editor Wrapper */}
-      <div className="flex-1 relative bg-[#1e1e1e]/50 backdrop-blur-sm">
+        )}
+        
         <Editor
           height="100%"
           defaultLanguage="typescript"
           value={code}
-          onChange={(value) => setCode(value || '')}
-          onMount={handleEditorDidMount}
-          theme={theme}
+          onChange={v => setCode(v || '')}
+          onMount={handleEditorMount}
+          theme="vs-dark"
           options={{
-            fontSize,
-            minimap: { enabled: minimap },
+            fontSize: 13,
+            fontFamily: "'JetBrains Mono', 'Fira Code', 'SF Mono', monospace",
+            fontLigatures: true,
+            minimap: { enabled: false },
             scrollBeyondLastLine: false,
             automaticLayout: true,
             tabSize: 2,
-            fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-            fontLigatures: true,
             wordWrap: 'on',
             lineNumbers: 'on',
-            renderLineHighlight: 'all', // 'line' | 'gutter' | 'none' | 'all'
+            renderLineHighlight: 'line',
             cursorBlinking: 'smooth',
             cursorSmoothCaretAnimation: 'on',
             smoothScrolling: true,
-            folding: true,
-            padding: { top: 16, bottom: 16 },
-            roundedSelection: true,
-            contextmenu: true,
-
-            // Visual tweaks to blend better
-            guides: {
-              bracketPairs: true,
-              indentation: true,
+            padding: { top: 20, bottom: 20 },
+            scrollbar: {
+              verticalScrollbarSize: 8,
+              horizontalScrollbarSize: 8,
             },
-            suggest: {
-              showKeywords: true,
-              showSnippets: true,
-            },
-            quickSuggestions: {
-              other: true,
-              comments: false,
-              strings: true,
-            },
-            parameterHints: { enabled: true },
-            formatOnPaste: true,
-            formatOnType: true,
           }}
         />
       </div>
 
-      {/* Toast Notification */}
-      {toast && (
-        <div className={`absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full border backdrop-blur-md shadow-xl z-50 animate-slide-up flex items-center gap-2 ${toast.type === 'success'
-          ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-300'
-          : 'bg-amber-500/20 border-amber-500/50 text-amber-300'
-          }`}>
-          <div className={`w-2 h-2 rounded-full ${toast.type === 'success' ? 'bg-emerald-400' : 'bg-amber-400'} animate-pulse`} />
-          <span className="text-xs font-medium">{toast.message}</span>
-        </div>
-      )}
-
-      {/* Error Display */}
-      {error && (
-        <div className="p-3 bg-red-500/10 border-t border-red-500/20 backdrop-blur-md animate-slide-up">
-          <div className="flex items-start gap-2">
-            <span className="text-red-400 font-bold">⚠</span>
-            <p className="text-red-300 text-xs font-mono break-all">{error}</p>
+      {/* Error */}
+      {error && !isCompiling && (
+        <div className="px-5 py-4 bg-red-500/10 border-t border-red-500/20 flex items-start gap-3">
+          <div className="w-5 h-5 rounded-full bg-red-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <svg className="w-3 h-3 text-red-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 6L6 18M6 6l12 12" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-xs font-medium text-red-400 mb-1">Compilation Error</p>
+            <p className="text-xs text-red-300/80 font-mono">{error}</p>
           </div>
         </div>
       )}
 
-      {/* Bottom Control Bar */}
-      <div className="flex items-center justify-between p-3 border-t border-white/5 bg-black/40 backdrop-blur-md">
-        <div className="flex gap-2">
+      {/* Footer */}
+      <div className="h-16 px-5 flex items-center justify-between border-t border-zinc-800/50 bg-zinc-950/50">
+        <div className="flex items-center gap-3">
           <button
-            onClick={handleRunAndNotify}
-            disabled={isRunning}
-            className={`
-                group relative flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all duration-300
-                ${isRunning
-                ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
-                : 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white shadow-lg shadow-emerald-900/20 hover:shadow-emerald-900/40 hover:scale-[1.02] active:scale-[0.98]'}
-            `}
-          >
-            {isRunning ? (
-              <>
-                <div className="w-2 h-2 rounded-full bg-zinc-500" />
-                Running...
-              </>
-            ) : (
-              <>
-                <Play className="w-4 h-4 fill-current" />
-                Run Code
-                <span className="hidden opacity-50 text-[10px] font-normal group-hover:inline ml-1">(Shift+Enter)</span>
-              </>
+            onClick={handleRun}
+            disabled={isRunning || isCompiling}
+            className={cn(
+              "h-10 px-6 rounded-xl font-medium text-sm flex items-center gap-2.5 transition-all duration-200",
+              isRunning || isCompiling
+                ? "bg-zinc-800 text-zinc-500 cursor-not-allowed"
+                : "bg-gradient-to-r from-emerald-500 to-emerald-400 text-black hover:from-emerald-400 hover:to-emerald-300 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 active:scale-95"
             )}
-          </button>
-
-          <button
-            onClick={handleStop}
-            disabled={!isRunning}
-            className={`
-                flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all
-                ${!isRunning
-                ? 'bg-transparent text-zinc-600 cursor-not-allowed'
-                : 'bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:text-red-300 border border-red-500/20'}
-            `}
           >
-            <Square className="w-3 h-3 fill-current" />
-            Stop
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+            {isCompiling ? 'Compiling...' : 'Run'}
           </button>
+
+          {isRunning && (
+            <button
+              onClick={handleStop}
+              className="h-10 px-5 rounded-xl text-sm font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white transition-all duration-200 flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <rect x="6" y="6" width="12" height="12" rx="1" />
+              </svg>
+              Stop
+            </button>
+          )}
+
+          {/* Keyboard hint */}
+          <div className="hidden sm:flex items-center gap-1.5 text-[10px] text-zinc-600">
+            <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 font-mono">⇧</kbd>
+            <span>+</span>
+            <kbd className="px-1.5 py-0.5 rounded bg-zinc-800 font-mono">↵</kbd>
+          </div>
         </div>
 
-        <div className="flex items-center gap-4 text-[10px] font-mono text-zinc-500">
-          {isRunning ? <span className="text-emerald-400 animate-pulse">● LIVE</span> : <span>○ READY</span>}
-          <div className="h-3 w-px bg-zinc-800" />
-          <span>Ln {editorRef.current?.getPosition()?.lineNumber || 1}, Col {editorRef.current?.getPosition()?.column || 1}</span>
-        </div>
+        <TemplateSelector onSelect={setCode} />
       </div>
-
-      <TemplateSelector onSelect={setCode} />
     </div>
   );
 });
 
-const ToolbarButton = ({ onClick, icon: Icon, tooltip }: { onClick: () => void, icon: any, tooltip: string }) => (
-  <button
-    onClick={onClick}
-    className="p-2 text-zinc-400 hover:text-white hover:bg-white/5 rounded-md transition-colors relative group"
-    title={tooltip}
-  >
-    <Icon className="w-4 h-4" />
-  </button>
-)
+const TemplateSelector = memo(function TemplateSelector({ onSelect }: { onSelect: (code: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
+  const [templates, setTemplates] = useState<ReturnType<typeof import('@/data/templates').getTemplates>>([]);
+  const [genres, setGenres] = useState<string[]>([]);
 
-
-const TemplateSelector = memo(function TemplateSelector({
-  onSelect
-}: {
-  onSelect: (code: string) => void
-}) {
-  const [showAll, setShowAll] = useState(false);
-  const { TEMPLATES } = require('@/data/templates');
-  
-  // Clear any cached broken templates on mount
   useEffect(() => {
-    const TEMPLATE_VERSION = '2.0'; // Increment to force clear
-    const lastVersion = localStorage.getItem('algorhythm_template_version');
-    
-    if (lastVersion !== TEMPLATE_VERSION) {
-      console.log('Template version updated, clearing cache');
-      localStorage.removeItem('algorhythm_saved_code');
-      localStorage.setItem('algorhythm_template_version', TEMPLATE_VERSION);
-    }
+    const loadTemplates = async () => {
+      const { getTemplates } = await import('@/data/templates');
+      const { getAllGenres } = await import('@/data/library');
+      setTemplates(getTemplates());
+      setGenres(getAllGenres());
+    };
+    loadTemplates();
   }, []);
-  
-  // Group templates by persona
-  const groupedTemplates = TEMPLATES.reduce((acc: any, t: any) => {
+
+  const filteredTemplates = templates.filter(t => {
+    const matchesSearch = !search || 
+      t.name.toLowerCase().includes(search.toLowerCase()) ||
+      t.persona.toLowerCase().includes(search.toLowerCase());
+    const matchesGenre = !selectedGenre || t.description.toLowerCase().includes(selectedGenre.toLowerCase());
+    return matchesSearch && matchesGenre;
+  });
+
+  const groupedByArtist = filteredTemplates.reduce((acc, t) => {
     if (!acc[t.persona]) acc[t.persona] = [];
     acc[t.persona].push(t);
     return acc;
-  }, {});
-
-  const quickTemplates = [
-    { name: 'Starter', code: getStarterCode() },
-    { name: 'Alan Walker', code: getAlanWalkerTemplate() },
-    { name: 'Marshmello', code: getMarshmelloTemplate() },
-    { name: 'Deadmau5', code: getDeadmau5Template() },
-  ];
+  }, {} as Record<string, typeof templates>);
 
   return (
-    <div className="p-3 border-t border-zinc-800 relative z-[60]">
-      <div className="flex items-center justify-between mb-2">
-        <label className="text-xs text-zinc-400">Templates</label>
-        <button
-          onClick={() => setShowAll(!showAll)}
-          className="text-xs text-primary hover:text-primary/80 transition-colors relative z-[70]"
-        >
-          {showAll ? 'Show Less' : `Browse All (${TEMPLATES.length})`}
-        </button>
-      </div>
-      
-      {!showAll ? (
-        <div className="flex gap-2 flex-wrap">
-          {quickTemplates.map((t) => (
-            <button
-              key={t.name}
-              onClick={() => onSelect(t.code)}
-              className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-white text-xs rounded-lg transition-colors"
-            >
-              {t.name}
-            </button>
-          ))}
-        </div>
-      ) : (
-        <div className="max-h-96 overflow-y-auto space-y-4 pr-2 relative z-[70] bg-black/95 backdrop-blur-xl rounded-lg p-2 border border-white/10">
-          {Object.entries(groupedTemplates).map(([persona, templates]: [string, any]) => (
-            <div key={persona} className="space-y-2">
-              <h3 className="text-xs font-bold text-zinc-300 uppercase tracking-wider">
-                {persona}
-              </h3>
-              <div className="grid grid-cols-2 gap-2">
-                {templates.map((t: any) => (
-                  <button
-                    key={t.id}
-                    onClick={() => onSelect(t.code)}
-                    className="group px-3 py-2 bg-zinc-800/50 hover:bg-zinc-700 border border-zinc-700 hover:border-primary/50 rounded-lg transition-all text-left"
-                  >
-                    <div className="text-xs font-medium text-white group-hover:text-primary transition-colors">
-                      {t.name}
-                    </div>
-                    <div className="text-[10px] text-zinc-500 mt-0.5 line-clamp-2">
-                      {t.description}
-                    </div>
-                  </button>
-                ))}
+    <div className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="h-10 px-4 rounded-xl text-sm text-zinc-400 hover:text-white hover:bg-zinc-800/50 transition-all duration-200 flex items-center gap-2 border border-transparent hover:border-zinc-700/50"
+      >
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+        <span className="hidden sm:inline">Templates</span>
+        <span className="text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full font-medium">{templates.length}</span>
+        <svg className={cn("w-4 h-4 transition-transform duration-200", open && "rotate-180")} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute bottom-full right-0 mb-2 w-96 max-h-[75vh] rounded-2xl bg-zinc-900/95 border border-zinc-700/50 shadow-2xl shadow-black/50 z-50 animate-fade-up flex flex-col backdrop-blur-xl overflow-hidden">
+            {/* Header */}
+            <div className="p-4 border-b border-zinc-800/50">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-medium text-white">Template Library</h3>
+                <span className="text-[10px] text-zinc-500">{templates.length} templates</span>
+              </div>
+              <div className="relative">
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="M21 21l-4.35-4.35" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Search by name or artist..."
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="w-full h-10 pl-10 pr-4 bg-zinc-800/50 border border-zinc-700/50 rounded-xl text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 transition-all"
+                />
               </div>
             </div>
-          ))}
-        </div>
+
+            {/* Genre Filter */}
+            <div className="px-4 py-3 border-b border-zinc-800/50 flex gap-2 overflow-x-auto scrollbar-hide">
+              <button
+                onClick={() => setSelectedGenre(null)}
+                className={cn(
+                  "px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-all duration-200",
+                  !selectedGenre 
+                    ? "bg-emerald-500 text-black" 
+                    : "bg-zinc-800/50 text-zinc-400 hover:text-white hover:bg-zinc-700/50"
+                )}
+              >
+                All Genres
+              </button>
+              {genres.slice(0, 6).map(genre => (
+                <button
+                  key={genre}
+                  onClick={() => setSelectedGenre(selectedGenre === genre ? null : genre)}
+                  className={cn(
+                    "px-3 py-1.5 text-xs font-medium rounded-lg whitespace-nowrap transition-all duration-200",
+                    selectedGenre === genre 
+                      ? "bg-emerald-500 text-black" 
+                      : "bg-zinc-800/50 text-zinc-400 hover:text-white hover:bg-zinc-700/50"
+                  )}
+                >
+                  {genre}
+                </button>
+              ))}
+            </div>
+
+            {/* Templates List */}
+            <div className="flex-1 overflow-y-auto p-3 space-y-4">
+              {/* Built-in basics */}
+              <div>
+                <div className="px-2 py-1.5 text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Getting Started</div>
+                <div className="space-y-1">
+                  <TemplateItem name="Starter" subtitle="Basic beat pattern" onClick={() => { onSelect(STARTER_CODE); setOpen(false); }} />
+                  <TemplateItem name="Four on the Floor" subtitle="Classic house rhythm" onClick={() => { onSelect(FOUR_ON_FLOOR); setOpen(false); }} />
+                  <TemplateItem name="Breakbeat" subtitle="Syncopated drums" onClick={() => { onSelect(BREAKBEAT); setOpen(false); }} />
+                </div>
+              </div>
+
+              {/* Artist templates */}
+              {Object.entries(groupedByArtist).map(([artist, artistTemplates]) => (
+                <div key={artist}>
+                  <div className="px-2 py-1.5 text-[10px] font-semibold text-zinc-500 uppercase tracking-wider flex items-center gap-2">
+                    <span>{artist}</span>
+                    <span className="text-emerald-500/60">({artistTemplates.length})</span>
+                  </div>
+                  <div className="space-y-1">
+                    {artistTemplates.map(t => (
+                      <TemplateItem
+                        key={t.id}
+                        name={t.name}
+                        subtitle={t.description}
+                        onClick={() => { onSelect(t.code); setOpen(false); }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              {filteredTemplates.length === 0 && search && (
+                <div className="px-4 py-12 text-center">
+                  <div className="text-3xl mb-3">🔍</div>
+                  <p className="text-sm text-zinc-400">No templates found for "{search}"</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
       )}
     </div>
   );
 });
 
-function getStarterCode(): string {
-  return `// Algorhythm - Live DJ Performance
+const TemplateItem = memo(function TemplateItem({ 
+  name, 
+  subtitle,
+  onClick 
+}: { 
+  name: string; 
+  subtitle?: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full px-3 py-2.5 text-left hover:bg-zinc-800/50 rounded-xl transition-all duration-200 group border border-transparent hover:border-zinc-700/30"
+    >
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="text-sm text-zinc-200 group-hover:text-white font-medium">{name}</div>
+          {subtitle && <div className="text-[11px] text-zinc-500 mt-0.5">{subtitle}</div>}
+        </div>
+        <svg className="w-4 h-4 text-zinc-600 group-hover:text-emerald-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M9 18l6-6-6-6" />
+        </svg>
+      </div>
+    </button>
+  );
+});
+
+const STARTER_CODE = `// Algorhythm - Live DJ Performance
 // Press Shift+Enter to run
 
 dj.bpm = 128;
@@ -476,119 +537,49 @@ dj.loop('16n', (time) => {
   
   tick++;
 });`;
-}
 
-function getAlanWalkerTemplate(): string {
-  return `// Alan Walker - Faded Style
-// Melodic future bass with emotional chords
-
-dj.bpm = 90;
-
-const chords = [
-  ['F#3', 'A3', 'C#4'], // F#m
-  ['D3', 'F#3', 'A3'],  // D
-  ['A3', 'C#4', 'E4'],  // A
-  ['E3', 'G#3', 'B3']   // E
-];
-
-const melody = ['C#5', 'B4', 'A4', 'F#4', 'E4', 'F#4', 'A4', 'B4'];
-
+const FOUR_ON_FLOOR = `// Four on the Floor
+dj.bpm = 126;
 let tick = 0;
 
 dj.loop('16n', (time) => {
-  const bar = Math.floor(tick / 16);
-  const beat = tick % 16;
-  
-  // Signature pluck melody
-  if (tick % 2 === 0) {
-    const note = melody[(tick / 2) % 8];
-    dj.synth.triggerAttackRelease(note, '8n', time);
-  }
-  
-  // Emotional chord progression
-  if (beat === 0) {
-    const chord = chords[bar % 4];
-    dj.pad.triggerAttackRelease(chord, '1m', time);
-  }
-  
-  // Kick pattern (drop)
-  if (bar >= 8 && tick % 4 === 0) {
+  // Kick on every beat
+  if (tick % 4 === 0) {
     dj.kick.triggerAttackRelease('C1', '8n', time);
   }
+  
+  // Snare on 2 and 4
+  if (tick % 8 === 4) {
+    dj.snare.triggerAttackRelease('C1', '8n', time);
+  }
+  
+  // Hi-hat on every 16th
+  dj.hihat.triggerAttackRelease('C1', '32n', time);
   
   tick++;
 });`;
-}
 
-function getMarshmelloTemplate(): string {
-  return `// Marshmello - Alone Style
-// Bouncy future bass
-
+const BREAKBEAT = `// Breakbeat Pattern
 dj.bpm = 140;
-
-const bassline = ['E2', 'E2', 'C#2', 'A1', 'B1', 'B1', 'G#1', 'E1'];
 let tick = 0;
 
 dj.loop('16n', (time) => {
-  const bar = Math.floor(tick / 16);
+  const pattern = tick % 16;
   
   // Kick pattern
-  if (tick % 8 === 0 || tick % 8 === 6) {
+  if ([0, 6, 10].includes(pattern)) {
     dj.kick.triggerAttackRelease('C1', '8n', time);
   }
   
-  // Bouncy bassline
-  if (bar >= 8 && tick % 2 === 0) {
-    const note = bassline[(tick / 2) % 8];
-    dj.bass.triggerAttackRelease(note, '16n', time);
+  // Snare pattern
+  if ([4, 12].includes(pattern)) {
+    dj.snare.triggerAttackRelease('C1', '8n', time);
   }
   
-  // Hi-hat rolls
-  if (tick % 2 === 1) {
+  // Hi-hat
+  if (tick % 2 === 0) {
     dj.hihat.triggerAttackRelease('C1', '32n', time);
   }
   
   tick++;
 });`;
-}
-
-function getDeadmau5Template(): string {
-  return `// Deadmau5 - Strobe Style
-// Progressive house with long builds
-
-dj.bpm = 128;
-
-const progression = [
-  ['F#3', 'A3', 'C#4'], // F#m
-  ['D3', 'F#3', 'A3'],  // D
-  ['A3', 'C#4', 'E4'],  // A
-  ['E3', 'G#3', 'B3']   // E
-];
-
-let tick = 0;
-
-dj.loop('16n', (time) => {
-  const bar = Math.floor(tick / 16);
-  const beat = tick % 16;
-  
-  // Minimal kick (only after build)
-  if (bar >= 16 && tick % 4 === 0) {
-    dj.kick.triggerAttackRelease('C1', '8n', time);
-  }
-  
-  // Emotional chord progression
-  if (beat === 0) {
-    const chord = progression[bar % 4];
-    dj.pad.triggerAttackRelease(chord, '2m', time);
-  }
-  
-  // Signature arp (builds slowly)
-  if (bar >= 8 && tick % 2 === 0) {
-    const notes = ['F#4', 'A4', 'C#5', 'E5'];
-    const note = notes[(tick / 2) % 4];
-    dj.synth.triggerAttackRelease(note, '16n', time);
-  }
-  
-  tick++;
-});`;
-}
