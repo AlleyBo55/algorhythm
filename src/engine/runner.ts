@@ -6,6 +6,8 @@ import { dj as djAPI } from './djapi';
 import * as Tone from 'tone';
 import { styleProcessor } from './styleProcessor';
 import { PatternParser } from './patternParser';
+import { nativeAudio, playSample, isSampleReady, preDecodeAllSamples } from './nativeAudio';
+import { samplePlayer } from './samplePlayer';
 
 // Structured error type for IDE-like error display
 export interface CompileError {
@@ -165,7 +167,53 @@ export class Runner {
 
             stop: () => {
                 audioEngine.stop();
-            }
+            },
+
+            // Native audio sample playback - ZERO LAG!
+            // Uses professional look-ahead scheduling (Ableton/Yamaha standard)
+            sample: (path: string, options?: {
+                time?: number;
+                volume?: number;
+                pitch?: number;
+                pan?: number;
+            }) => {
+                // Normalize path - add .mp3 if not present
+                const normalizedPath = path.endsWith('.mp3') ? path : `${path}.mp3`;
+                
+                // Use native audio for instant playback
+                if (isSampleReady(normalizedPath)) {
+                    try {
+                        // Use provided time or schedule slightly ahead for glitch-free playback
+                        return playSample(normalizedPath, {
+                            time: options?.time, // Let nativeAudio add look-ahead if not specified
+                            volume: options?.volume ?? 0,
+                            pitch: options?.pitch ?? 1.0,
+                            pan: options?.pan ?? 0,
+                        });
+                    } catch (e) {
+                        console.warn(`Native audio error for ${normalizedPath}:`, e);
+                    }
+                }
+                
+                // Fallback to Tone.js sample player if not pre-decoded
+                console.warn(`Sample ${normalizedPath} not pre-decoded, using Tone.js fallback`);
+                samplePlayer.prefetchRelated(normalizedPath);
+                return samplePlayer.play(normalizedPath, {
+                    time: options?.time,
+                    volume: options?.volume,
+                    speed: options?.pitch,
+                });
+            },
+
+            // Preload samples for instant playback
+            preload: async (paths: string[]) => {
+                console.log(`🔄 Preloading ${paths.length} samples...`);
+                await preDecodeAllSamples(paths);
+                console.log(`✅ Preloaded ${paths.length} samples`);
+            },
+
+            // Check sample stats
+            sampleStats: () => samplePlayer.getStats()
         };
 
         // 3. Execute Code safely
@@ -190,9 +238,12 @@ export class Runner {
             runFn(enhancedDJ, enhancedDJ.A, enhancedDJ.B, enhancedDJ.C, enhancedDJ.D);
             
             // Start Transport if not already running
+            // Add a small delay to ensure all scheduled events are ready
             if (Tone.Transport.state !== 'started') {
-                audioEngine.start();
-                console.log('▶️ Transport started');
+                // Schedule start slightly in the future to avoid timing issues
+                const startTime = Tone.now() + 0.1;
+                Tone.Transport.start(startTime);
+                console.log('▶️ Transport scheduled to start at', startTime);
             }
             console.log('✅ Code executed successfully');
         } catch (e: unknown) {

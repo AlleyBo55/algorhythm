@@ -1,168 +1,337 @@
 'use client';
 
-import { memo, useEffect, useState } from 'react';
-import { DeckComponent } from '@/components/Deck';
-import { MixerComponent } from '@/components/Mixer';
-import { CodeEditorPanel } from '@/components/CodeEditor';
-import { Visualizer } from '@/components/Visualizer';
-import { AIAssistant } from '@/components/AIAssistant';
+import { useState, useRef, useCallback, useEffect, memo, Suspense } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { Float, MeshDistortMaterial, Sparkles } from '@react-three/drei';
+import * as THREE from 'three';
+import dynamic from 'next/dynamic';
 
-import { dj } from '@/engine/djapi';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+const Studio = dynamic(() => import('@/components/Studio'), { ssr: false });
+const LoadingScreen = dynamic(() => import('@/components/LoadingScreen'), { ssr: false });
 
-import { LoadingScreen } from '@/components/LoadingScreen';
+type AppState = 'welcome' | 'loading' | 'ready';
 
 export default function HomePage() {
-  const [initStatus, setInitStatus] = useState<'idle' | 'booting' | 'ready'>('idle');
+  const [state, setState] = useState<AppState>('welcome');
+  const djRef = useRef<any>(null);
 
-  const handleStart = async () => {
-    setInitStatus('booting');
-
+  const handleStart = useCallback(async () => {
+    setState('loading');
     try {
-      // Initialize audio engine
+      const { dj } = await import('@/engine/djapi');
+      djRef.current = dj;
       await dj.engine.init();
-      await dj.init();
-
-      // We rely on LoadingScreen's onComplete callback to switch to 'ready'
-      // effectively waiting for the animation *and* the init.
+      dj.init();
     } catch (err) {
-      console.error('Failed to initialize:', err);
-      setInitStatus('idle'); // Reset on error
+      console.error('Init failed:', err);
+      setState('welcome');
     }
-  };
+  }, []);
 
-  if (initStatus === 'idle') {
+  if (state === 'welcome') {
     return <WelcomeScreen onStart={handleStart} />;
   }
 
-  if (initStatus === 'booting') {
-    return <LoadingScreen onComplete={() => setInitStatus('ready')} />;
+  if (state === 'loading') {
+    return <LoadingScreen onComplete={() => setState('ready')} />;
   }
 
   return (
-    <main className="min-h-screen p-4 md:p-6 lg:p-8 flex flex-col gap-6 relative z-10">
-      <Header />
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-0">
-
-        {/* LEFT COLUMN - Decks A & B */}
-        <div className="lg:col-span-3 flex flex-col gap-6">
-          <SectionTitle>Decks A / B</SectionTitle>
-          <div className="flex-1 flex flex-col gap-4 min-h-0">
-            <DeckComponent id="A" />
-            <DeckComponent id="B" />
-          </div>
-        </div>
-
-        {/* CENTER COLUMN - Code Editor (Main Stage) */}
-        <div className="lg:col-span-6 flex flex-col gap-4 min-h-[600px]">
-          <div className="flex items-center justify-between">
-            <SectionTitle>Live Code Studio</SectionTitle>
-            <div className="flex gap-2">
-              <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-              <span className="text-xs font-mono text-red-400 uppercase tracking-widest">Live</span>
-            </div>
-          </div>
-          <Card variant="glass" className="flex-1 overflow-hidden border-primary/20 shadow-[0_0_50px_-20px_rgba(167,139,250,0.3)]">
-            <CodeEditorPanel />
-          </Card>
-
-          {/* Secondary Decks */}
-          <div className="hidden xl:grid grid-cols-2 gap-4 mt-2 opacity-60 hover:opacity-100 transition-opacity">
-            <DeckComponent id="C" small />
-            <DeckComponent id="D" small />
-          </div>
-        </div>
-
-        {/* RIGHT COLUMN - Mixer & AI */}
-        <div className="lg:col-span-3 flex flex-col gap-6">
-          <SectionTitle>Master Control</SectionTitle>
-          <div className="flex-1 flex flex-col gap-4">
-            {/* Visualizer on top */}
-            <Card variant="neon" className="h-48 overflow-hidden relative">
-              <Visualizer />
-            </Card>
-
-            <MixerComponent />
-
-            {/* AI Assistant - Replaces System Status */}
-            <AIAssistant
-              onCodeInsert={(newCode) => {
-                // Find and update code editor
-                const event = new CustomEvent('insertCode', { detail: newCode });
-                window.dispatchEvent(event);
-              }}
-              getCurrentCode={() => {
-                // Get current code from editor
-                return '';
-              }}
-            />
-          </div>
-        </div>
-      </div>
-    </main>
+    <Suspense fallback={<LoadingFallback />}>
+      <Studio />
+    </Suspense>
   );
 }
 
-const SectionTitle = ({ children }: { children: React.ReactNode }) => (
-  <h2 className="text-xs font-bold tracking-[0.2em] text-muted-foreground uppercase mb-2 ml-1">{children}</h2>
-)
-
-const Header = memo(function Header() {
+// Minimal loading fallback
+const LoadingFallback = memo(function LoadingFallback() {
   return (
-    <header className="flex items-center justify-between py-2 mb-2">
-      <div className="flex items-center gap-4">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center shadow-lg shadow-primary/20">
-          <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-          </svg>
-        </div>
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-white/90">
-            Algo<span className="text-primary">Rhythm</span>
-          </h1>
-          <p className="text-[10px] text-muted-foreground tracking-widest uppercase">Pro Audio Engine v0.1.0</p>
-        </div>
-      </div>
-
-      <nav className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={() => alert("Hub feature coming soon!")}>Hub</Button>
-        <Button variant="ghost" size="sm" onClick={() => window.location.href = '/docs'}>Docs</Button>
-        <Button variant="glow" size="sm" className="hidden sm:flex">
-          Save Session
-        </Button>
-      </nav>
-    </header>
+    <div className="fixed inset-0 bg-[#030303] flex items-center justify-center">
+      <div className="w-8 h-8 border-2 border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
+    </div>
   );
 });
 
-const WelcomeScreen = memo(function WelcomeScreen({ onStart }: { onStart: () => void }) {
+// ============================================================================
+// WELCOME SCREEN - Cinematic, immersive entry experience
+// ============================================================================
+
+function WelcomeScreen({ onStart }: { onStart: () => void }) {
+  const [mounted, setMounted] = useState(false);
+  const [hovered, setHovered] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMounted(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden z-20">
-      <div className="relative z-10 text-center space-y-8 p-12 bg-black/40 backdrop-blur-3xl rounded-3xl border border-white/10 shadow-2xl max-w-lg w-full">
-        <div className="w-24 h-24 bg-gradient-to-br from-primary to-indigo-600 rounded-3xl flex items-center justify-center mx-auto shadow-2xl shadow-primary/30 animate-pulse-soft">
-          <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-          </svg>
-        </div>
-
-        <div className="space-y-2">
-          <h1 className="text-4xl font-bold text-white tracking-tight">Rhythm<span className="text-primary">Code</span></h1>
-          <p className="text-muted-foreground text-lg">Initialize Audio Engine</p>
-        </div>
-
-        <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-
-        <Button
-          onClick={onStart}
-          variant="glow"
-          size="lg"
-          className="w-full text-lg h-14"
+    <div className="fixed inset-0 bg-[#030303] overflow-hidden">
+      {/* 3D Background */}
+      <div className="absolute inset-0">
+        <Canvas
+          camera={{ position: [0, 0, 6], fov: 50 }}
+          dpr={[1, 2]}
+          gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
         >
-          Initialize System
-        </Button>
+          <Suspense fallback={null}>
+            <WelcomeScene hovered={hovered} />
+          </Suspense>
+        </Canvas>
       </div>
+
+      {/* Gradient overlays */}
+      <div className="absolute inset-0 bg-gradient-to-t from-[#030303] via-transparent to-[#030303]/50 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-r from-[#030303]/80 via-transparent to-[#030303]/80 pointer-events-none" />
+
+      {/* Noise texture overlay */}
+      <div 
+        className="absolute inset-0 opacity-[0.015] pointer-events-none mix-blend-overlay"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+        }}
+      />
+
+      {/* Content */}
+      <div className={`relative z-10 h-full flex flex-col items-center justify-center transition-all duration-1000 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+        <div className="w-full max-w-lg px-8">
+          
+          {/* Brand mark */}
+          <div className={`flex justify-center mb-16 transition-all duration-700 delay-100 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+            <div className="relative group">
+              {/* Outer glow ring */}
+              <div className="absolute -inset-4 rounded-3xl bg-gradient-to-r from-emerald-500/20 via-cyan-500/20 to-emerald-500/20 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              
+              {/* Logo container */}
+              <div className="relative w-24 h-24 rounded-2xl bg-gradient-to-br from-emerald-400 via-emerald-500 to-cyan-500 p-[2px] shadow-2xl shadow-emerald-500/25">
+                <div className="w-full h-full rounded-[14px] bg-[#030303] flex items-center justify-center">
+                  <svg className="w-12 h-12 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 18V5l12-2v13" />
+                    <circle cx="6" cy="18" r="3" fill="currentColor" stroke="none" />
+                    <circle cx="18" cy="16" r="3" fill="currentColor" stroke="none" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Typography */}
+          <div className={`text-center mb-16 transition-all duration-700 delay-200 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+            <h1 className="text-6xl font-extralight tracking-tight text-white mb-4">
+              Algo<span className="font-normal bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">Rhythm</span>
+            </h1>
+            <p className="text-lg text-zinc-500 font-light tracking-wide">
+              Live coding meets DJ performance
+            </p>
+          </div>
+
+          {/* CTA Button */}
+          <div className={`flex justify-center mb-12 transition-all duration-700 delay-300 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+            <button
+              onClick={onStart}
+              onMouseEnter={() => setHovered(true)}
+              onMouseLeave={() => setHovered(false)}
+              className="group relative"
+            >
+              {/* Button glow */}
+              <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-emerald-500 to-cyan-500 opacity-70 blur-lg group-hover:opacity-100 transition-opacity duration-300" />
+              
+              {/* Button */}
+              <div className="relative flex items-center gap-3 px-10 py-4 rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 text-black font-semibold text-lg shadow-xl shadow-emerald-500/30 group-hover:shadow-emerald-500/50 transition-all duration-300 group-active:scale-95">
+                <span>Enter Studio</span>
+                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </div>
+            </button>
+          </div>
+
+          {/* Feature pills */}
+          <div className={`flex flex-wrap justify-center gap-3 mb-12 transition-all duration-700 delay-400 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+            {['50+ Templates', 'Real-time DSP', 'MIDI Support', 'Live Coding'].map((feature, i) => (
+              <div 
+                key={feature}
+                className="px-4 py-2 rounded-full bg-white/5 border border-white/10 text-sm text-zinc-400 backdrop-blur-sm"
+                style={{ animationDelay: `${400 + i * 50}ms` }}
+              >
+                {feature}
+              </div>
+            ))}
+          </div>
+
+          {/* Keyboard hint */}
+          <div className={`text-center transition-all duration-700 delay-500 ${mounted ? 'opacity-100' : 'opacity-0'}`}>
+            <p className="text-xs text-zinc-600">
+              Press <kbd className="px-2 py-1 mx-1 rounded bg-zinc-800/50 text-zinc-500 font-mono text-[10px]">Space</kbd> or click to begin
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom gradient fade */}
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#030303] to-transparent pointer-events-none" />
+      
+      {/* Decorative corner elements */}
+      <CornerDecorations />
     </div>
+  );
+}
+
+// Corner decorations for visual interest
+const CornerDecorations = memo(function CornerDecorations() {
+  return (
+    <>
+      {/* Top left */}
+      <div className="absolute top-8 left-8 w-24 h-24 border-l border-t border-zinc-800/50 rounded-tl-3xl" />
+      {/* Top right */}
+      <div className="absolute top-8 right-8 w-24 h-24 border-r border-t border-zinc-800/50 rounded-tr-3xl" />
+      {/* Bottom left */}
+      <div className="absolute bottom-8 left-8 w-24 h-24 border-l border-b border-zinc-800/50 rounded-bl-3xl" />
+      {/* Bottom right */}
+      <div className="absolute bottom-8 right-8 w-24 h-24 border-r border-b border-zinc-800/50 rounded-br-3xl" />
+    </>
+  );
+});
+
+// ============================================================================
+// 3D WELCOME SCENE
+// ============================================================================
+
+const WelcomeScene = memo(function WelcomeScene({ hovered }: { hovered: boolean }) {
+  return (
+    <>
+      {/* Ambient */}
+      <ambientLight intensity={0.1} />
+      <pointLight position={[10, 10, 10]} intensity={0.5} color="#10b981" />
+      <pointLight position={[-10, -10, -10]} intensity={0.3} color="#06b6d4" />
+      
+      {/* Main floating orb */}
+      <Float speed={1.5} rotationIntensity={0.3} floatIntensity={0.8}>
+        <MainOrb hovered={hovered} />
+      </Float>
+
+      {/* Orbiting rings */}
+      <OrbitingRings />
+
+      {/* Particle field */}
+      <Sparkles
+        count={100}
+        scale={10}
+        size={1.5}
+        speed={0.3}
+        color="#10b981"
+        opacity={0.3}
+      />
+
+      {/* Background spheres */}
+      <BackgroundSpheres />
+    </>
+  );
+});
+
+const MainOrb = memo(function MainOrb({ hovered }: { hovered: boolean }) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const materialRef = useRef<any>(null);
+
+  useFrame((state) => {
+    if (!meshRef.current || !materialRef.current) return;
+    const t = state.clock.elapsedTime;
+    
+    meshRef.current.rotation.y = t * 0.15;
+    meshRef.current.rotation.x = Math.sin(t * 0.3) * 0.1;
+    
+    const targetDistort = hovered ? 0.5 : 0.3;
+    materialRef.current.distort += (targetDistort - materialRef.current.distort) * 0.05;
+    
+    const targetScale = hovered ? 1.15 : 1;
+    meshRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.05);
+  });
+
+  return (
+    <mesh ref={meshRef}>
+      <icosahedronGeometry args={[1.5, 8]} />
+      <MeshDistortMaterial
+        ref={materialRef}
+        color="#10b981"
+        emissive="#10b981"
+        emissiveIntensity={0.15}
+        roughness={0.1}
+        metalness={0.9}
+        distort={0.3}
+        speed={2}
+        transparent
+        opacity={0.85}
+      />
+    </mesh>
+  );
+});
+
+const OrbitingRings = memo(function OrbitingRings() {
+  const groupRef = useRef<THREE.Group>(null);
+
+  useFrame((state) => {
+    if (!groupRef.current) return;
+    groupRef.current.rotation.z = state.clock.elapsedTime * 0.1;
+    groupRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.2) * 0.2;
+  });
+
+  return (
+    <group ref={groupRef}>
+      {[2.2, 2.8, 3.4].map((radius, i) => (
+        <mesh key={i} rotation={[Math.PI / 2 + i * 0.2, i * 0.3, 0]}>
+          <torusGeometry args={[radius, 0.008, 16, 100]} />
+          <meshBasicMaterial color="#10b981" transparent opacity={0.3 - i * 0.08} />
+        </mesh>
+      ))}
+    </group>
+  );
+});
+
+const BackgroundSpheres = memo(function BackgroundSpheres() {
+  const spheres = useRef(
+    Array.from({ length: 20 }, () => ({
+      position: [
+        (Math.random() - 0.5) * 15,
+        (Math.random() - 0.5) * 15,
+        (Math.random() - 0.5) * 10 - 5,
+      ] as [number, number, number],
+      scale: 0.05 + Math.random() * 0.15,
+      speed: 0.2 + Math.random() * 0.3,
+    }))
+  ).current;
+
+  return (
+    <group>
+      {spheres.map((sphere, i) => (
+        <FloatingSphere key={i} {...sphere} index={i} />
+      ))}
+    </group>
+  );
+});
+
+const FloatingSphere = memo(function FloatingSphere({ 
+  position, 
+  scale, 
+  speed,
+  index 
+}: { 
+  position: [number, number, number]; 
+  scale: number; 
+  speed: number;
+  index: number;
+}) {
+  const meshRef = useRef<THREE.Mesh>(null);
+
+  useFrame((state) => {
+    if (!meshRef.current) return;
+    const t = state.clock.elapsedTime;
+    meshRef.current.position.y = position[1] + Math.sin(t * speed + index) * 0.5;
+  });
+
+  return (
+    <mesh ref={meshRef} position={position}>
+      <sphereGeometry args={[scale, 16, 16]} />
+      <meshBasicMaterial color="#10b981" transparent opacity={0.2} />
+    </mesh>
   );
 });

@@ -5,6 +5,7 @@ import { VinylMode, JogWheel } from './vinyl';
 import { SpectrumAnalyzer } from './spectrum';
 import { SlipMode } from './slip';
 import { Quantize } from './quantize';
+import { DeckBus } from './deckBus';
 
 export interface HotCue {
   time: number;
@@ -37,6 +38,9 @@ export class Deck {
   public readonly slip: SlipMode;
   public readonly quantize: Quantize;
   private _pausedAt: number = 0;
+  
+  // Professional audio bus (Phase 1)
+  public readonly bus: DeckBus;
 
   private _bpm: number = 120;
   private _key: string = '';
@@ -48,9 +52,12 @@ export class Deck {
   constructor(id: string) {
     this.id = id;
     this.hotcues = new Map();
+    
+    // Initialize professional deck bus (Phase 1)
+    this.bus = new DeckBus();
 
-    // Audio chain: Player → Volume → EQ → Filter → Effects → Spectrum → Master
-    this.player = new Tone.Player(); // Removed .sync() for immediate playback
+    // Audio chain: Player → Volume → EQ → Filter → Effects → Spectrum → Bus → Master
+    this.player = new Tone.Player();
     this.volume = new Tone.Volume(0);
 
     // Phase 2: Advanced features
@@ -73,7 +80,7 @@ export class Deck {
     // Main filter
     this.filter = new Tone.Filter({ type: 'lowpass', frequency: 20000, Q: 1 });
 
-    // Connect chain with Phase 2 features
+    // Connect chain with Phase 1 professional bus
     this.player.chain(
       this.volume,
       this.eq.low,
@@ -82,19 +89,18 @@ export class Deck {
       this.filter,
       this.effects.input
     );
-    this.effects.output.connect(this.spectrum.node);
-    // Spectrum is the final node before mixer
-    // toDestination handled by mixer
+    
+    // Connect effects to bus input
+    this.effects.output.connect(this.bus.inputNode);
+    
+    // Connect spectrum analyzer
+    this.bus.outputNode.connect(this.spectrum.node);
   }
 
   // Helper to get the final output node for the mixer to connect to
   public get outputNode(): Tone.ToneAudioNode {
-    // spectrum.node is a native AnalyserNode. We need to wrap it or return a Tone node that connects to it.
-    // Ideally, we should have a final Tone.Gain node that connects to spectrum, and return THAT (or a parallel output).
-    // Let's return the effects.output directly. The spectrum sits in parallel or after?
-    // In constructor: this.effects.output.connect(this.spectrum.node);
-    // So effects.output IS the end of the Tone chain.
-    return this.effects.output;
+    // Return the bus output node (professional signal chain)
+    return this.bus.outputNode;
   }
 
   async load(file: File | string): Promise<void> {
@@ -266,5 +272,6 @@ export class Deck {
     this.vinyl.dispose();
     this.spectrum.dispose();
     this.slip.dispose();
+    this.bus.dispose(); // Dispose professional bus
   }
 }
