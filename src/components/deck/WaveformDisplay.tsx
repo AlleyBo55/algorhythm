@@ -12,11 +12,7 @@ interface WaveformDisplayProps {
 }
 
 export const WaveformDisplay = memo(function WaveformDisplay({
-  audioFile,
-  beatGrid = [],
-  hotCues = new Map(),
-  onReady,
-  height = 80
+  audioFile, beatGrid = [], hotCues = new Map(), onReady, height = 80
 }: WaveformDisplayProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const wavesurferRef = useRef<WaveSurfer | null>(null);
@@ -24,27 +20,13 @@ export const WaveformDisplay = memo(function WaveformDisplay({
 
   useEffect(() => {
     if (!containerRef.current) return;
-
     const wavesurfer = WaveSurfer.create({
       container: containerRef.current,
-      waveColor: '#3f3f46',
-      progressColor: '#1db954',
-      cursorColor: '#ffffff',
-      barWidth: 2,
-      barGap: 1,
-      barRadius: 1,
-      height,
-      normalize: true,
-      backend: 'WebAudio',
-      interact: true
+      waveColor: '#3f3f46', progressColor: '#1db954', cursorColor: '#ffffff',
+      barWidth: 2, barGap: 1, barRadius: 1, height, normalize: true, backend: 'WebAudio', interact: true
     });
-
     wavesurferRef.current = wavesurfer;
-    wavesurfer.on('ready', () => {
-      setIsReady(true);
-      onReady?.(wavesurfer);
-    });
-
+    wavesurfer.on('ready', () => { setIsReady(true); onReady?.(wavesurfer); });
     return () => wavesurfer.destroy();
   }, [height, onReady]);
 
@@ -64,23 +46,14 @@ export const WaveformDisplay = memo(function WaveformDisplay({
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-
     const duration = wavesurferRef.current.getDuration();
     const width = canvas.width;
     const canvasHeight = canvas.height;
-
-    ctx.strokeStyle = '#52525b';
-    ctx.lineWidth = 1;
-    ctx.globalAlpha = 0.3;
-
+    ctx.strokeStyle = '#52525b'; ctx.lineWidth = 1; ctx.globalAlpha = 0.3;
     beatGrid.forEach((beatTime) => {
       const x = (beatTime / duration) * width;
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, canvasHeight);
-      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvasHeight); ctx.stroke();
     });
-
     ctx.globalAlpha = 1;
   }, [isReady, beatGrid]);
 
@@ -90,30 +63,17 @@ export const WaveformDisplay = memo(function WaveformDisplay({
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-
     const duration = wavesurferRef.current.getDuration();
     const width = canvas.width;
-
-    ctx.fillStyle = '#ef4444';
-    ctx.globalAlpha = 0.8;
-
+    ctx.fillStyle = '#ef4444'; ctx.globalAlpha = 0.8;
     hotCues.forEach((cue) => {
       const x = (cue.time / duration) * width;
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x - 4, 8);
-      ctx.lineTo(x + 4, 8);
-      ctx.closePath();
-      ctx.fill();
-
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x - 4, 8); ctx.lineTo(x + 4, 8); ctx.closePath(); ctx.fill();
       if (cue.label) {
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '10px Inter, system-ui, sans-serif';
-        ctx.fillText(cue.label, x + 6, 10);
-        ctx.fillStyle = '#ef4444';
+        ctx.fillStyle = '#ffffff'; ctx.font = '10px Inter, system-ui, sans-serif';
+        ctx.fillText(cue.label, x + 6, 10); ctx.fillStyle = '#ef4444';
       }
     });
-
     ctx.globalAlpha = 1;
   }, [isReady, hotCues]);
 

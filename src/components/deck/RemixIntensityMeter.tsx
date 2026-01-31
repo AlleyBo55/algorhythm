@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Card } from './ui/Card';
+import { Card } from '../ui/Card';
 
 interface RemixIntensityMeterProps {
   intensity: number; // 0-1
@@ -11,7 +11,6 @@ export function RemixIntensityMeter({ intensity }: RemixIntensityMeterProps) {
   const [displayIntensity, setDisplayIntensity] = useState(0);
 
   useEffect(() => {
-    // Smooth animation
     const interval = setInterval(() => {
       setDisplayIntensity(prev => {
         const diff = intensity - prev;
@@ -19,7 +18,6 @@ export function RemixIntensityMeter({ intensity }: RemixIntensityMeterProps) {
         return prev + diff * 0.1;
       });
     }, 50);
-
     return () => clearInterval(interval);
   }, [intensity]);
 
@@ -35,26 +33,15 @@ export function RemixIntensityMeter({ intensity }: RemixIntensityMeterProps) {
           <span className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
             Remix Intensity
           </span>
-          <span className="text-lg font-bold text-white">
-            {percentage}%
-          </span>
+          <span className="text-lg font-bold text-white">{percentage}%</span>
         </div>
-
-        {/* Progress bar */}
         <div className="h-2 bg-black/40 rounded-full overflow-hidden">
-          <div 
-            className={`h-full ${color} transition-all duration-300 ease-out`}
-            style={{ width: `${percentage}%` }}
-          />
+          <div className={`h-full ${color} transition-all duration-300 ease-out`} style={{ width: `${percentage}%` }} />
         </div>
-
-        {/* Labels */}
         <div className="flex justify-between text-[10px] text-muted-foreground">
           <span>Original</span>
           <span>Remix</span>
         </div>
-
-        {/* Status indicator */}
         <div className="flex items-center gap-2 pt-1">
           <div className={`w-2 h-2 rounded-full ${
             displayIntensity < 0.1 ? 'bg-blue-400' :
@@ -64,8 +51,7 @@ export function RemixIntensityMeter({ intensity }: RemixIntensityMeterProps) {
           <span className="text-xs text-muted-foreground">
             {displayIntensity < 0.1 ? 'Original Track' :
              displayIntensity < 0.5 ? 'Building...' :
-             displayIntensity < 0.9 ? 'Blending' :
-             'Full Remix'}
+             displayIntensity < 0.9 ? 'Blending' : 'Full Remix'}
           </span>
         </div>
       </div>

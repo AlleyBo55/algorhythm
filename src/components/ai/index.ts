@@ -1,2 +1,3 @@
 // AI Components
-export { default as AIAssistant } from '../AIAssistant';
+export { AIAssistant } from './AIAssistant';
+export { default } from './AIAssistant';
