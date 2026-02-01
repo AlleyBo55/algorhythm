@@ -1,138 +1,301 @@
 'use client';
 
-import { memo } from 'react';
-import { motion } from 'framer-motion';
+import { memo, useRef } from 'react';
+import { motion, useInView } from 'framer-motion';
 import type { SectionTheme } from '@/hooks/useLandingPage';
 
 interface FeaturesSectionProps {
   theme: SectionTheme;
 }
 
-const CAPABILITIES = [
+const FEATURES = [
   {
-    label: 'Latency',
-    value: '<1ms',
-    detail: 'Instant response',
+    category: 'DJ Engine',
+    icon: '🎛️',
+    items: [
+      '4-Deck Professional Mixer',
+      'Beat Sync & BPM Detection',
+      'Hot Cues & Loop Controls',
+      'Crossfader Curves',
+      'Vinyl Mode & Scratching',
+      'Waveform Display',
+    ],
   },
   {
-    label: 'Hot Reload',
-    value: 'Live',
-    detail: 'No restart needed',
+    category: 'Instruments',
+    icon: '🎹',
+    items: [
+      '30+ Built-in Sounds',
+      'Drums, Synths, Keys',
+      'Producer Presets',
+      'Custom Sound Design',
+      'Orchestra & Strings',
+      'Song-specific Presets',
+    ],
   },
   {
-    label: 'Effects',
-    value: '12+',
-    detail: 'Studio-grade DSP',
+    category: 'Effects',
+    icon: '✨',
+    items: [
+      'Studio-grade Reverb',
+      'Stereo Delay',
+      'LP/HP/BP Filters',
+      'Distortion & Bitcrusher',
+      'Chorus & Phaser',
+      'Auto-filter',
+    ],
   },
   {
-    label: 'MIDI',
-    value: '128ch',
-    detail: 'Full control',
-  },
-  {
-    label: 'Creativity',
-    value: '∞',
-    detail: 'No limits',
-  },
-  {
-    label: 'Export',
-    value: 'HD',
-    detail: 'WAV & MP3',
+    category: 'Pro Tools',
+    icon: '⚡',
+    items: [
+      'MIDI Support (128 ch)',
+      'Recording & Export',
+      'Key Detection',
+      'Time Stretching',
+      'Automation',
+      'Real-time Visualizer',
+    ],
   },
 ];
 
-export const FeaturesSection = memo(function FeaturesSection({ theme }: FeaturesSectionProps) {
+// Feature card with hover effects
+const FeatureCard = memo(function FeatureCard({ 
+  feature, 
+  index,
+  theme,
+  isInView,
+}: { 
+  feature: typeof FEATURES[0];
+  index: number;
+  theme: SectionTheme;
+  isInView: boolean;
+}) {
   return (
-    <section className="relative h-screen flex flex-col items-center justify-center px-4 sm:px-6 overflow-hidden">
-      <div className="relative max-w-5xl mx-auto w-full">
-        {/* Main content - centered, minimal with glass backdrop */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center mb-20 relative"
+    <motion.div
+      initial={{ opacity: 0, y: 40, rotateX: -10 }}
+      animate={isInView ? { opacity: 1, y: 0, rotateX: 0 } : {}}
+      transition={{ 
+        duration: 0.7, 
+        delay: 0.1 * index,
+        ease: [0.22, 1, 0.36, 1],
+      }}
+      whileHover={{ y: -8, transition: { duration: 0.3 } }}
+      className="group relative"
+    >
+      {/* Glow on hover */}
+      <div 
+        className="absolute -inset-1 rounded-2xl lg:rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl"
+        style={{ backgroundColor: `${theme.primary}20` }}
+      />
+      
+      <div className="relative p-3 sm:p-6 lg:p-8 rounded-xl lg:rounded-2xl bg-white/[0.03] backdrop-blur-xl border border-white/[0.08] overflow-hidden h-full">
+        {/* Gradient overlay on hover */}
+        <div 
+          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+          style={{
+            background: `linear-gradient(135deg, ${theme.primary}08 0%, transparent 50%, ${theme.accent}05 100%)`,
+          }}
+        />
+        
+        {/* Icon */}
+        <motion.div 
+          className="text-xl sm:text-3xl lg:text-4xl mb-2 sm:mb-4 lg:mb-6"
+          whileHover={{ scale: 1.2, rotate: 10 }}
+          transition={{ type: 'spring', stiffness: 400 }}
         >
-          {/* Glass backdrop - matching Hero section style */}
-          <div 
-            className="absolute -inset-8 sm:-inset-12 rounded-3xl backdrop-blur-sm"
-            style={{ backgroundColor: `${theme.bg}60` }}
-          />
+          {feature.icon}
+        </motion.div>
+        
+        {/* Category title */}
+        <h3 
+          className="text-xs sm:text-base lg:text-xl font-bold mb-2 sm:mb-4 lg:mb-6 relative"
+          style={{ 
+            color: theme.primary,
+            fontFamily: "'Space Grotesk', sans-serif",
+          }}
+        >
+          {feature.category}
+        </h3>
+        
+        {/* Items list - show only 3 on mobile */}
+        <ul className="space-y-1 sm:space-y-2 lg:space-y-3 relative">
+          {feature.items.slice(0, 3).map((item, i) => (
+            <motion.li 
+              key={item} 
+              className="flex items-start gap-1.5 sm:gap-3"
+              initial={{ opacity: 0, x: -10 }}
+              animate={isInView ? { opacity: 1, x: 0 } : {}}
+              transition={{ delay: 0.2 + index * 0.1 + i * 0.05 }}
+            >
+              <motion.div 
+                className="w-1 h-1 lg:w-1.5 lg:h-1.5 rounded-full mt-1 sm:mt-1.5 lg:mt-2 flex-shrink-0"
+                style={{ backgroundColor: theme.primary }}
+                whileHover={{ scale: 2 }}
+              />
+              <span className="text-[9px] sm:text-xs lg:text-sm text-white/60 group-hover:text-white/80 transition-colors leading-tight">
+                {item}
+              </span>
+            </motion.li>
+          ))}
+        </ul>
+      </div>
+    </motion.div>
+  );
+});
+
+// Animated stat counter
+const StatCounter = memo(function StatCounter({ 
+  value, 
+  label, 
+  index,
+  theme,
+  isInView,
+}: { 
+  value: string; 
+  label: string;
+  index: number;
+  theme: SectionTheme;
+  isInView: boolean;
+}) {
+  return (
+    <motion.div 
+      className="text-center group"
+      initial={{ opacity: 0, y: 20 }}
+      animate={isInView ? { opacity: 1, y: 0 } : {}}
+      transition={{ delay: 0.6 + index * 0.1 }}
+    >
+      <motion.div 
+        className="text-xl sm:text-4xl lg:text-5xl font-bold mb-0.5 sm:mb-1 lg:mb-2 tabular-nums"
+        style={{ 
+          color: theme.primary,
+          fontFamily: "'Space Grotesk', sans-serif",
+        }}
+        whileHover={{ scale: 1.1 }}
+        transition={{ type: 'spring', stiffness: 400 }}
+      >
+        {value}
+      </motion.div>
+      <div className="text-[9px] sm:text-xs lg:text-sm text-white/40 uppercase tracking-wider">
+        {label}
+      </div>
+    </motion.div>
+  );
+});
+
+export const FeaturesSection = memo(function FeaturesSection({ theme }: FeaturesSectionProps) {
+  const sectionRef = useRef(null);
+  const isInView = useInView(sectionRef, { once: true, amount: 0.1 });
+
+  return (
+    <section ref={sectionRef} className="relative lg:min-h-screen flex items-center overflow-hidden py-12 sm:py-16 lg:py-0">
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <motion.div 
+          className="text-center mb-6 sm:mb-10 lg:mb-16"
+          initial={{ opacity: 0, y: 30 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.8 }}
+        >
+          {/* Section label */}
+          <motion.div 
+            className="flex items-center justify-center gap-4 mb-4 sm:mb-6 lg:mb-8"
+            initial={{ opacity: 0 }}
+            animate={isInView ? { opacity: 1 } : {}}
+            transition={{ delay: 0.2 }}
+          >
+            <motion.div 
+              className="h-[1px] rounded-full hidden sm:block"
+              style={{ backgroundColor: theme.primary }}
+              initial={{ width: 0 }}
+              animate={isInView ? { width: 40 } : {}}
+              transition={{ delay: 0.3, duration: 0.8 }}
+            />
+            <span 
+              className="text-[10px] sm:text-sm font-medium tracking-[0.15em] sm:tracking-[0.2em] uppercase"
+              style={{ 
+                color: theme.primary,
+                fontFamily: "'Space Grotesk', sans-serif",
+              }}
+            >
+              Capabilities
+            </span>
+            <motion.div 
+              className="h-[1px] rounded-full hidden sm:block"
+              style={{ backgroundColor: theme.primary }}
+              initial={{ width: 0 }}
+              animate={isInView ? { width: 40 } : {}}
+              transition={{ delay: 0.3, duration: 0.8 }}
+            />
+          </motion.div>
+
+          <h2 
+            className="text-2xl sm:text-4xl lg:text-6xl xl:text-7xl font-bold leading-[0.95] tracking-[-0.03em] mb-2 sm:mb-4 lg:mb-6"
+            style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+          >
+            <motion.span 
+              className="block text-white"
+              initial={{ opacity: 0, y: 20 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ delay: 0.1 }}
+            >
+              Everything a
+            </motion.span>
+            <motion.span 
+              className="block"
+              style={{ color: theme.primary }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={isInView ? { opacity: 1, y: 0 } : {}}
+              transition={{ delay: 0.2 }}
+            >
+              pro needs.
+            </motion.span>
+          </h2>
           
-          <div className="relative">
-            <h2 
-              className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.05] mb-6"
-              style={{ color: theme.text }}
-            >
-              Your code.
-              <br />
-              <span style={{ color: theme.primary }}>Your sound.</span>
-            </h2>
-            
-            <p 
-              className="text-xl max-w-xl mx-auto leading-relaxed"
-              style={{ color: theme.textMuted }}
-            >
-              Every function is a note. Every loop is a rhythm. 
-              Every variable holds a universe of sound.
-            </p>
-          </div>
+          <motion.p 
+            className="text-sm sm:text-lg lg:text-xl text-white/50 max-w-lg mx-auto"
+            initial={{ opacity: 0 }}
+            animate={isInView ? { opacity: 1 } : {}}
+            transition={{ delay: 0.4 }}
+          >
+            From bedroom producer to festival stage.
+          </motion.p>
         </motion.div>
 
-        {/* Specs bar - horizontal, clean */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-          className="relative"
+        {/* Features grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 lg:gap-6 mb-6 sm:mb-10 lg:mb-16">
+          {FEATURES.map((feature, index) => (
+            <FeatureCard 
+              key={feature.category} 
+              feature={feature} 
+              index={index}
+              theme={theme}
+              isInView={isInView}
+            />
+          ))}
+        </div>
+
+        {/* Stats row - show only 3 on mobile */}
+        <motion.div 
+          className="grid grid-cols-3 gap-4 sm:gap-8 lg:gap-16 justify-items-center"
+          initial={{ opacity: 0 }}
+          animate={isInView ? { opacity: 1 } : {}}
+          transition={{ delay: 0.5 }}
         >
-          {/* Glass container */}
-          <div 
-            className="rounded-3xl p-8 backdrop-blur-xl"
-            style={{ 
-              background: `linear-gradient(180deg, ${theme.primary}08 0%, ${theme.bg}60 100%)`,
-              border: `1px solid ${theme.primary}15`,
-            }}
-          >
-            <div className="grid grid-cols-3 md:grid-cols-6 gap-6 md:gap-4">
-              {CAPABILITIES.map((cap, i) => (
-                <motion.div
-                  key={cap.label}
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.4 + i * 0.05 }}
-                  className="text-center"
-                >
-                  <div 
-                    className="text-3xl sm:text-4xl font-black mb-1"
-                    style={{ color: theme.primary }}
-                  >
-                    {cap.value}
-                  </div>
-                  <div 
-                    className="text-sm font-semibold mb-0.5"
-                    style={{ color: theme.text }}
-                  >
-                    {cap.label}
-                  </div>
-                  <div 
-                    className="text-xs"
-                    style={{ color: theme.textMuted }}
-                  >
-                    {cap.detail}
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-          
-          {/* Decorative line */}
-          <motion.div
-            initial={{ scaleX: 0 }}
-            animate={{ scaleX: 1 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-24 h-0.5 rounded-full"
-            style={{ backgroundColor: theme.primary }}
-          />
+          {[
+            { value: '30+', label: 'Sounds' },
+            { value: '8', label: 'Effects' },
+            { value: '4', label: 'Decks' },
+          ].map((stat, index) => (
+            <StatCounter 
+              key={stat.label} 
+              value={stat.value}
+              label={stat.label}
+              index={index}
+              theme={theme}
+              isInView={isInView}
+            />
+          ))}
         </motion.div>
       </div>
     </section>

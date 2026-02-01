@@ -63,7 +63,140 @@ export interface LoadProgress {
   message: string;
 }
 
+export interface SampleStatus {
+  path: string;
+  cached: boolean;
+  decoded: boolean;
+  error?: string;
+}
+
+export interface SampleLoadResult {
+  success: boolean;
+  path: string;
+  error?: string;
+  fromCache: boolean;
+}
+
 type ProgressCallback = (progress: LoadProgress) => void;
+
+// Track failed samples for better error reporting
+const failedSamples = new Map<string, string>();
+
+/**
+ * Get status of a specific sample
+ */
+export async function getSampleStatus(path: string): Promise<SampleStatus> {
+  await sampleCache.init();
+  const cached = await sampleCache.has(path);
+  const decoded = decodedBufferCache.has(path);
+  const error = failedSamples.get(path);
+  return { path, cached, decoded, error };
+}
+
+/**
+ * Get status of all samples used in code
+ */
+export async function getSamplesStatusFromCode(code: string): Promise<SampleStatus[]> {
+  const samples = extractSamplesFromCode(code);
+  const allSamples = [...new Set([...ALL_SAMPLES, ...samples])];
+  return Promise.all(allSamples.map(getSampleStatus));
+}
+
+/**
+ * Check if a sample exists on CDN (HEAD request)
+ */
+export async function checkSampleExists(path: string): Promise<boolean> {
+  const url = path.endsWith('.mp3') ? `${R2_CDN}/${path}` : `${R2_CDN}/${path}.mp3`;
+  try {
+    const response = await fetch(url, { method: 'HEAD' });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Load a single sample with detailed error handling
+ */
+export async function loadSample(path: string): Promise<SampleLoadResult> {
+  await sampleCache.init();
+  
+  // Check cache first
+  const cached = await sampleCache.has(path);
+  if (cached) {
+    await sampleCache.get(path); // Load into memory
+    return { success: true, path, fromCache: true };
+  }
+  
+  // Try to fetch from CDN
+  const url = path.endsWith('.mp3') ? `${R2_CDN}/${path}` : `${R2_CDN}/${path}.mp3`;
+  
+  try {
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      const error = response.status === 404 
+        ? `Sample not found: ${path}` 
+        : `Failed to load sample (${response.status}): ${path}`;
+      failedSamples.set(path, error);
+      return { success: false, path, error, fromCache: false };
+    }
+    
+    const arrayBuffer = await response.arrayBuffer();
+    await sampleCache.set(path, arrayBuffer);
+    failedSamples.delete(path); // Clear any previous error
+    
+    return { success: true, path, fromCache: false };
+  } catch (e) {
+    const error = `Network error loading ${path}: ${e instanceof Error ? e.message : 'Unknown error'}`;
+    failedSamples.set(path, error);
+    return { success: false, path, error, fromCache: false };
+  }
+}
+
+/**
+ * Manually preload specific samples (for use in code)
+ * Returns detailed results for each sample
+ */
+export async function manualPreload(
+  paths: string[], 
+  onProgress?: (loaded: number, total: number, current: string, status: 'loading' | 'cached' | 'error') => void
+): Promise<{ success: SampleLoadResult[]; failed: SampleLoadResult[] }> {
+  await sampleCache.init();
+  
+  const results: SampleLoadResult[] = [];
+  const total = paths.length;
+  
+  for (let i = 0; i < paths.length; i++) {
+    const path = paths[i];
+    const cached = await sampleCache.has(path);
+    
+    if (cached) {
+      onProgress?.(i + 1, total, path, 'cached');
+      await sampleCache.get(path);
+      results.push({ success: true, path, fromCache: true });
+    } else {
+      onProgress?.(i + 1, total, path, 'loading');
+      const result = await loadSample(path);
+      results.push(result);
+      if (!result.success) {
+        onProgress?.(i + 1, total, path, 'error');
+      }
+    }
+  }
+  
+  return {
+    success: results.filter(r => r.success),
+    failed: results.filter(r => !r.success)
+  };
+}
+
+/**
+ * Get list of all failed samples
+ */
+export function getFailedSamples(): Map<string, string> {
+  return new Map(failedSamples);
+}
 
 class SampleCache {
   private db: IDBDatabase | null = null;
@@ -362,15 +495,18 @@ function extractSamplesFromCode(code: string): string[] {
 /**
  * Preload samples used in code BEFORE execution
  * This ensures no streaming/lag during playback
+ * Returns detailed results including any failed samples
  */
 export async function preloadSamplesFromCode(
   code: string, 
-  onProgress?: (progress: { loaded: number; total: number; current: string; phase: string }) => void
-): Promise<void> {
+  onProgress?: (progress: { loaded: number; total: number; current: string; phase: string; errors?: string[] }) => void
+): Promise<{ loaded: number; failed: SampleLoadResult[] }> {
   await sampleCache.init();
   
+  const errors: string[] = [];
+  const failedResults: SampleLoadResult[] = [];
+  
   // Phase 1: Preload ALL core instrument samples (drums, bass, etc.)
-  // These are used by Tone.Sampler instruments
   onProgress?.({ loaded: 0, total: ALL_SAMPLES.length, current: '', phase: 'Loading instruments...' });
   
   let loaded = 0;
@@ -379,26 +515,19 @@ export async function preloadSamplesFromCode(
   for (const path of ALL_SAMPLES) {
     const cached = await sampleCache.has(path);
     if (!cached) {
-      try {
-        onProgress?.({ loaded, total, current: path, phase: 'Downloading...' });
-        // Path already includes .mp3 extension
-        const url = `${R2_CDN}/${path}`;
-        const response = await fetch(url);
-        if (response.ok) {
-          const arrayBuffer = await response.arrayBuffer();
-          await sampleCache.set(path, arrayBuffer);
-        } else {
-          console.warn(`Sample not found (${response.status}): ${path}`);
-        }
-      } catch (e) {
-        console.warn(`Failed to preload ${path}:`, e);
+      onProgress?.({ loaded, total, current: path, phase: 'Downloading...' });
+      const result = await loadSample(path);
+      if (!result.success) {
+        errors.push(result.error || `Failed to load ${path}`);
+        failedResults.push(result);
+        console.warn(`⚠️ Sample failed: ${path} - ${result.error}`);
       }
     } else {
       // Load into memory from IndexedDB
       await sampleCache.get(path);
     }
     loaded++;
-    onProgress?.({ loaded, total, current: path, phase: 'Loading instruments...' });
+    onProgress?.({ loaded, total, current: path, phase: 'Loading instruments...', errors: errors.length > 0 ? errors : undefined });
   }
   
   // Phase 2: Extract and preload any additional samples from code
@@ -411,22 +540,25 @@ export async function preloadSamplesFromCode(
     for (const path of additionalSamples) {
       const cached = await sampleCache.has(path);
       if (!cached) {
-        try {
-          onProgress?.({ loaded, total: total + additionalSamples.length, current: path, phase: 'Loading code samples...' });
-          const url = `${R2_CDN}/${path}.mp3`;
-          const response = await fetch(url);
-          if (response.ok) {
-            const arrayBuffer = await response.arrayBuffer();
-            await sampleCache.set(path, arrayBuffer);
-          }
-        } catch (e) {
-          console.warn(`Failed to preload ${path}:`, e);
+        onProgress?.({ loaded, total: total + additionalSamples.length, current: path, phase: 'Loading code samples...' });
+        const result = await loadSample(path.endsWith('.mp3') ? path : `${path}.mp3`);
+        if (!result.success) {
+          errors.push(result.error || `Failed to load ${path}`);
+          failedResults.push(result);
+          console.warn(`⚠️ Code sample failed: ${path} - ${result.error}`);
         }
       }
       loaded++;
     }
   }
   
-  onProgress?.({ loaded: total, total, current: '', phase: 'Ready!' });
-  console.log('✅ All samples preloaded');
+  if (errors.length > 0) {
+    console.warn(`⚠️ ${errors.length} samples failed to load:`, errors);
+    onProgress?.({ loaded: total, total, current: '', phase: `Ready (${errors.length} samples missing)`, errors });
+  } else {
+    onProgress?.({ loaded: total, total, current: '', phase: 'Ready!' });
+  }
+  
+  console.log(`✅ Preloaded ${loaded - failedResults.length}/${loaded} samples`);
+  return { loaded: loaded - failedResults.length, failed: failedResults };
 }

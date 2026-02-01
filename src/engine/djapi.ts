@@ -7,7 +7,7 @@ import { getInstruments, getEffects } from './instruments';
 import { styleProcessor } from './styleProcessor';
 import { addSampleSupport } from './samplePlayer';
 import { SOUND_PRESETS, SoundPresetName, createConfiguredSynth, SynthConfig } from './soundDesign';
-// ... (keep existing imports)
+import { manualPreload, getSampleStatus, type SampleLoadResult } from './sampleCache';
 
 
 
@@ -564,6 +564,37 @@ export class DJAPI {
   private applyPreset(name: string): void {
     console.log(`🎨 Preset: ${name}`);
     // Preset logic from existing presets.ts
+  }
+
+  /**
+   * Manually preload samples before running code
+   * Use this to ensure samples are cached and ready for instant playback
+   * 
+   * @example
+   * // Preload specific samples
+   * await dj.preloadSamples(['drums/kick-1.mp3', 'synth/lead-1.mp3']);
+   * 
+   * // With progress callback
+   * await dj.preloadSamples(['drums/kick-1.mp3'], (loaded, total, current, status) => {
+   *   console.log(`${loaded}/${total}: ${current} - ${status}`);
+   * });
+   */
+  async preloadSamples(
+    paths: string[],
+    onProgress?: (loaded: number, total: number, current: string, status: 'loading' | 'cached' | 'error') => void
+  ): Promise<{ success: SampleLoadResult[]; failed: SampleLoadResult[] }> {
+    return manualPreload(paths, onProgress);
+  }
+
+  /**
+   * Check if a sample is cached and ready
+   * 
+   * @example
+   * const status = await dj.sampleStatus('drums/kick-1.mp3');
+   * if (status.cached) console.log('Ready!');
+   */
+  async sampleStatus(path: string): Promise<{ path: string; cached: boolean; decoded: boolean; error?: string }> {
+    return getSampleStatus(path);
   }
 }
 

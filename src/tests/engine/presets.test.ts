@@ -52,15 +52,15 @@ describe('Presets', () => {
   describe('createPresets', () => {
     it('should return an object with all preset functions', () => {
       expect(presets).toBeDefined();
-      expect(typeof presets.alanWalker).toBe('function');
-      expect(typeof presets.marshmello).toBe('function');
+      expect(typeof presets.etherealEDM).toBe('function');
+      expect(typeof presets.futureBass).toBe('function');
       expect(typeof presets.synthwave).toBe('function');
       expect(typeof presets.reset).toBe('function');
     });
 
     it('should have all expected preset keys', () => {
       const expectedPresets = [
-        'alanWalker', 'marshmello', 'steveAoki', 'diplo', 'synthwave',
+        'etherealEDM', 'futureBass', 'steveAoki', 'diplo', 'synthwave',
         'strangerThings', 'mandalorian', 'lofi', 'animeOst', 'animeBattle',
         'daftPunk', 'hansZimmer', 'ghibli', 'trap', 'eurobeat',
         'pop', 'rock', 'orchestral', 'theWeeknd', 'duaLipa',
@@ -73,9 +73,9 @@ describe('Presets', () => {
     });
   });
 
-  describe('alanWalker preset', () => {
+  describe('etherealEDM preset', () => {
     it('should configure pad with ethereal settings', () => {
-      presets.alanWalker();
+      presets.etherealEDM();
       
       expect(mockInstruments.pad.set).toHaveBeenCalled();
       const padCall = mockInstruments.pad.set.mock.calls[0][0];
@@ -84,15 +84,15 @@ describe('Presets', () => {
     });
 
     it('should configure lead with fatsawtooth', () => {
-      presets.alanWalker();
+      presets.etherealEDM();
       
       expect(mockInstruments.lead.set).toHaveBeenCalled();
     });
   });
 
-  describe('marshmello preset', () => {
+  describe('futureBass preset', () => {
     it('should configure lead with wide supersaw', () => {
-      presets.marshmello();
+      presets.futureBass();
       
       expect(mockInstruments.lead.set).toHaveBeenCalled();
       const leadCall = mockInstruments.lead.set.mock.calls[0][0];
@@ -100,7 +100,7 @@ describe('Presets', () => {
     });
 
     it('should boost kick volume for punchy sound', () => {
-      presets.marshmello();
+      presets.futureBass();
       
       expect(mockInstruments.kick.set).toHaveBeenCalled();
       const kickCall = mockInstruments.kick.set.mock.calls[0][0];

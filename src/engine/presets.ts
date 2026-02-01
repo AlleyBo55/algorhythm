@@ -6,28 +6,14 @@ export interface PresetMap {
     etherealEDM: () => void;
     // Happy future bass style
     futureBass: () => void;
-    // Aggressive electro house
-    electroHouse: () => void;
-    // Eclectic trap/moombahton
-    moombahton: () => void;
     // Synthwave/80s retro
     synthwave: () => void;
-    // Dark synth style
-    darkSynth: () => void;
-    // Cinematic western
-    cinematicWestern: () => void;
     // Lo-fi chill
     lofi: () => void;
     // Anime OST - emotional/action soundtrack
     animeOst: () => void;
     // Anime battle/action music
     animeBattle: () => void;
-    // French House
-    frenchHouse: () => void;
-    // Epic Cinematic
-    epicCinematic: () => void;
-    // Orchestral Piano
-    orchestralPiano: () => void;
     // Trap - Heavy 808s
     trap: () => void;
     // Eurobeat - High Energy
@@ -38,18 +24,23 @@ export interface PresetMap {
     rock: () => void;
     // Orchestral - Cinematic
     orchestral: () => void;
-    // Dark Synth Pop
-    darkSynthPop: () => void;
-    // Nu-Disco Pop
-    nuDisco: () => void;
-    // Jazz Hop / Lofi
-    jazzHop: () => void;
-    // Cloud Rap / Trap
-    cloudRap: () => void;
-    // Nu Metal
-    nuMetal: () => void;
+    // Producer presets
+    steveAoki: () => void;
+    diplo: () => void;
+    daftPunk: () => void;
+    theWeeknd: () => void;
+    duaLipa: () => void;
+    postMalone: () => void;
+    linkinPark: () => void;
+    hansZimmer: () => void;
+    nujabes: () => void;
+    // TV/Film presets
+    strangerThings: () => void;
+    mandalorian: () => void;
+    ghibli: () => void;
     // Funky 80s / Disco
     funky_80s: () => void;
+    // Reset
     reset: () => void;
 }
 

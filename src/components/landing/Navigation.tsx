@@ -1,7 +1,7 @@
 'use client';
 
-import { memo, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { memo, useRef } from 'react';
+import { motion } from 'framer-motion';
 import Link from 'next/link';
 import type { SectionTheme } from '@/hooks/useLandingPage';
 
@@ -11,226 +11,179 @@ interface NavigationProps {
   goToSection: (index: number) => void;
 }
 
-export const Navigation = memo(function Navigation({ mounted, theme, goToSection }: NavigationProps) {
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  return (
-    <>
-      <motion.nav
-        initial={{ opacity: 0, y: -20 }}
-        animate={mounted ? { opacity: 1, y: 0 } : {}}
-        transition={{ duration: 0.6 }}
-        className="fixed top-0 left-0 right-0 z-50"
-        style={{ backgroundColor: `${theme.bg}95` }}
-      >
-        <div className="backdrop-blur-md">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-            <Logo theme={theme} goToSection={goToSection} />
-            <NavLinks theme={theme} goToSection={goToSection} />
-            <div className="flex items-center gap-3">
-              <NavCTA theme={theme} />
-              <MobileMenuButton open={mobileOpen} setOpen={setMobileOpen} theme={theme} />
-            </div>
-          </div>
-        </div>
-      </motion.nav>
-
-      <MobileMenu open={mobileOpen} setOpen={setMobileOpen} theme={theme} goToSection={goToSection} />
-    </>
-  );
-});
-
-const Logo = memo(function Logo({ theme, goToSection }: { theme: SectionTheme; goToSection: (index: number) => void }) {
-  return (
-    <button onClick={() => goToSection(0)} className="flex items-center gap-2.5 group">
-      <motion.div 
-        className="relative w-10 h-10 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform"
-        animate={{ backgroundColor: theme.primary }}
-        transition={{ duration: 0.5 }}
-      >
-        <WaveformIcon theme={theme} />
-      </motion.div>
-      <div className="flex flex-col text-left">
-        <span className="text-lg font-bold tracking-tight" style={{ color: theme.text }}>
-          AlgoRhythm
-        </span>
-        <span className="text-[10px] tracking-widest uppercase -mt-0.5" style={{ color: theme.textMuted }}>
-          Code × Sound
-        </span>
-      </div>
-    </button>
-  );
-});
-
-const WaveformIcon = memo(function WaveformIcon({ theme }: { theme: SectionTheme }) {
-  return (
-    <svg className="w-5 h-5" style={{ color: theme.bg }} viewBox="0 0 24 24" fill="currentColor">
-      <rect x="2" y="10" width="2" height="4" rx="1" />
-      <rect x="6" y="7" width="2" height="10" rx="1" />
-      <rect x="10" y="4" width="2" height="16" rx="1" />
-      <rect x="14" y="8" width="2" height="8" rx="1" />
-      <rect x="18" y="6" width="2" height="12" rx="1" />
-      <rect x="22" y="9" width="2" height="6" rx="1" />
-    </svg>
-  );
-});
-
-const NavLinks = memo(function NavLinks({ theme, goToSection }: { theme: SectionTheme; goToSection: (index: number) => void }) {
-  const links = [
-    { label: 'Code', section: 1 },
-    { label: 'Features', section: 2 },
-    { label: 'Docs', href: '/docs' },
-  ];
-
-  return (
-    <div className="hidden md:flex items-center gap-1">
-      {links.map((item) => (
-        item.href ? (
-          <Link
-            key={item.label}
-            href={item.href}
-            className="px-4 py-2 text-sm transition-colors rounded-lg hover:opacity-80"
-            style={{ color: theme.textMuted }}
-          >
-            {item.label}
-          </Link>
-        ) : (
-          <button
-            key={item.label}
-            onClick={() => goToSection(item.section!)}
-            className="px-4 py-2 text-sm transition-colors rounded-lg hover:opacity-80"
-            style={{ color: theme.textMuted }}
-          >
-            {item.label}
-          </button>
-        )
-      ))}
-    </div>
-  );
-});
-
-const NavCTA = memo(function NavCTA({ theme }: { theme: SectionTheme }) {
-  return (
-    <div className="hidden sm:flex items-center gap-3">
-      <Link
-        href="/studio"
-        className="group px-5 py-2.5 rounded-full transition-transform hover:scale-105"
-        style={{ backgroundColor: theme.primary }}
-      >
-        <span className="text-sm font-semibold flex items-center gap-2" style={{ color: theme.bg }}>
-          Open Studio
-          <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M5 12h14M12 5l7 7-7 7" />
-          </svg>
-        </span>
-      </Link>
-    </div>
-  );
-});
-
-const MobileMenuButton = memo(function MobileMenuButton({ 
-  open, 
-  setOpen,
-  theme,
+// Magnetic nav link
+const MagneticNavLink = memo(function MagneticNavLink({ 
+  children, 
+  onClick,
+  href,
 }: { 
-  open: boolean; 
-  setOpen: (open: boolean) => void;
-  theme: SectionTheme;
+  children: React.ReactNode;
+  onClick?: () => void;
+  href?: string;
 }) {
-  return (
-    <button
-      onClick={() => setOpen(!open)}
-      className="md:hidden p-2 rounded-lg transition-colors"
-      style={{ color: theme.textMuted }}
-      aria-label="Toggle menu"
-    >
-      <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        {open ? (
-          <path d="M6 18L18 6M6 6l12 12" />
-        ) : (
-          <path d="M4 6h16M4 12h16M4 18h16" />
-        )}
-      </svg>
-    </button>
-  );
-});
+  const linkRef = useRef<HTMLDivElement | HTMLButtonElement>(null);
 
-const MobileMenu = memo(function MobileMenu({ 
-  open, 
-  setOpen,
-  theme,
-  goToSection,
-}: { 
-  open: boolean; 
-  setOpen: (open: boolean) => void;
-  theme: SectionTheme;
-  goToSection: (index: number) => void;
-}) {
-  const links = [
-    { label: 'Code', section: 1 },
-    { label: 'Features', section: 2 },
-    { label: 'Docs', href: '/docs' },
-  ];
-
-  const handleClick = (section?: number) => {
-    if (section !== undefined) {
-      goToSection(section);
-    }
-    setOpen(false);
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const el = linkRef.current;
+    if (!el) return;
+    
+    const rect = el.getBoundingClientRect();
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+    
+    el.style.transform = `translate(${x * 0.2}px, ${y * 0.2}px)`;
   };
 
-  return (
-    <AnimatePresence>
-      {open && (
+  const handleMouseLeave = () => {
+    const el = linkRef.current;
+    if (el) {
+      el.style.transform = 'translate(0, 0)';
+    }
+  };
+
+  const className = "relative text-sm text-white/50 hover:text-white transition-all duration-300 py-2 px-1 cursor-pointer";
+
+  if (href) {
+    return (
+      <Link href={href}>
         <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          className="fixed inset-x-0 top-[72px] z-40 md:hidden"
+          ref={linkRef as React.RefObject<HTMLDivElement>}
+          onMouseMove={handleMouseMove}
+          onMouseLeave={handleMouseLeave}
+          className={className}
+          style={{ fontFamily: "'Space Grotesk', sans-serif" }}
         >
-          <div 
-            className="mx-4 p-4 rounded-2xl"
-            style={{ 
-              backgroundColor: theme.bg, 
-              border: `1px solid ${theme.primary}30`,
-            }}
-          >
-            <div className="flex flex-col gap-2">
-              {links.map((item) => (
+          {children}
+          <motion.div 
+            className="absolute bottom-0 left-0 right-0 h-[1px] bg-white origin-left scale-x-0 group-hover:scale-x-100 transition-transform"
+          />
+        </motion.div>
+      </Link>
+    );
+  }
+
+  return (
+    <motion.button
+      ref={linkRef as React.RefObject<HTMLButtonElement>}
+      onClick={onClick}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      className={className}
+      style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+    >
+      {children}
+    </motion.button>
+  );
+});
+
+export const Navigation = memo(function Navigation({ mounted, theme, goToSection }: NavigationProps) {
+  if (!mounted) return null;
+
+  return (
+    <motion.header
+      initial={{ opacity: 0, y: -30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      className="fixed top-0 left-0 right-0 z-50"
+    >
+      <div className="backdrop-blur-2xl bg-black/10 border-b border-white/[0.06]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-5">
+          <div className="flex items-center justify-between">
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-2 sm:gap-4 group">
+              <motion.div 
+                className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center overflow-hidden"
+                animate={{ backgroundColor: `${theme.primary}15` }}
+                whileHover={{ scale: 1.05 }}
+                transition={{ duration: 0.3 }}
+              >
+                {/* Animated gradient background */}
+                <motion.div
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{
+                    background: `linear-gradient(135deg, ${theme.primary}30 0%, ${theme.accent}20 100%)`,
+                  }}
+                />
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 relative" style={{ color: theme.primary }} viewBox="0 0 24 24" fill="currentColor">
+                  <rect x="4" y="8" width="2" height="8" />
+                  <rect x="8" y="5" width="2" height="14" />
+                  <rect x="12" y="7" width="2" height="10" />
+                  <rect x="16" y="4" width="2" height="16" />
+                </svg>
+              </motion.div>
+              <motion.span 
+                className="text-sm sm:text-base font-semibold text-white/70 group-hover:text-white transition-colors tracking-tight"
+                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
+              >
+                Algorhythm
+              </motion.span>
+            </Link>
+
+            {/* Nav links - hidden on mobile */}
+            <nav className="hidden md:flex items-center gap-10">
+              {[
+                { label: 'Code', section: 1 },
+                { label: 'Features', section: 2 },
+                { label: 'Docs', href: '/docs' },
+              ].map((item) => (
                 item.href ? (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    onClick={() => setOpen(false)}
-                    className="px-4 py-3 rounded-xl transition-colors"
-                    style={{ color: theme.text }}
-                  >
+                  <MagneticNavLink key={item.label} href={item.href}>
                     {item.label}
-                  </Link>
+                  </MagneticNavLink>
                 ) : (
-                  <button
-                    key={item.label}
-                    onClick={() => handleClick(item.section)}
-                    className="px-4 py-3 rounded-xl transition-colors text-left"
-                    style={{ color: theme.text }}
-                  >
+                  <MagneticNavLink key={item.label} onClick={() => goToSection(item.section!)}>
                     {item.label}
-                  </button>
+                  </MagneticNavLink>
                 )
               ))}
-              <div className="h-px my-2" style={{ backgroundColor: `${theme.primary}30` }} />
-              <Link
-                href="/studio"
-                onClick={() => setOpen(false)}
-                className="px-4 py-3 text-center rounded-xl font-semibold"
-                style={{ backgroundColor: theme.primary, color: theme.bg }}
+            </nav>
+
+            {/* CTA */}
+            <Link href="/studio" className="hidden sm:block">
+              <motion.button
+                className="group relative px-4 sm:px-6 py-2 sm:py-3 rounded-full text-xs sm:text-sm font-semibold text-black overflow-hidden"
+                animate={{ backgroundColor: theme.primary }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                style={{ fontFamily: "'Space Grotesk', sans-serif" }}
               >
-                Open Studio
-              </Link>
-            </div>
+                {/* Hover gradient */}
+                <motion.div
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{
+                    background: `linear-gradient(135deg, ${theme.primary} 0%, ${theme.accent} 100%)`,
+                  }}
+                />
+                <span className="relative flex items-center gap-2">
+                  Open Studio
+                  <motion.svg 
+                    className="w-3 h-3 sm:w-4 sm:h-4" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2.5"
+                    initial={{ x: 0 }}
+                    whileHover={{ x: 3 }}
+                  >
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                  </motion.svg>
+                </span>
+              </motion.button>
+            </Link>
+
+            {/* Mobile menu button */}
+            <Link 
+              href="/studio" 
+              className="sm:hidden p-2 rounded-lg"
+              style={{ backgroundColor: `${theme.primary}20` }}
+            >
+              <svg className="w-5 h-5" style={{ color: theme.primary }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </Link>
           </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        </div>
+      </div>
+    </motion.header>
   );
 });

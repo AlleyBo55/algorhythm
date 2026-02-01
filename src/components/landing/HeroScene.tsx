@@ -2,589 +2,590 @@
 
 import { memo, useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
-import { Text, Sparkles } from '@react-three/drei';
+import { Float, MeshDistortMaterial, MeshWobbleMaterial } from '@react-three/drei';
 import * as THREE from 'three';
+import type { SectionTheme } from '@/hooks/useLandingPage';
 
 interface HeroSceneProps {
   currentSection: number;
+  theme: SectionTheme;
 }
 
-const COLORS = {
-  green: '#1db954',
-  cyan: '#22d3ee',
-  purple: '#a855f7',
-  orange: '#f97316',
-  pink: '#ec4899',
-  white: '#ffffff',
-};
-
-// Section-specific color palettes
-const SECTION_PALETTES = [
-  { primary: COLORS.green, secondary: COLORS.cyan, accent: COLORS.purple },    // Hero
-  { primary: COLORS.purple, secondary: COLORS.cyan, accent: COLORS.green },    // Code
-  { primary: COLORS.orange, secondary: COLORS.pink, accent: COLORS.green },    // Features
-  { primary: COLORS.green, secondary: COLORS.cyan, accent: COLORS.orange },    // CTA
-];
-
-const CODE_SNIPPETS = [
-  { text: 'play()', color: COLORS.green },
-  { text: 'synth.osc()', color: COLORS.cyan },
-  { text: 'bpm: 128', color: COLORS.orange },
-  { text: 'reverb(0.8)', color: COLORS.purple },
-  { text: '♪ => { }', color: COLORS.pink },
-  { text: 'beat.drop()', color: COLORS.green },
-  { text: 'mix(A, B)', color: COLORS.cyan },
-  { text: 'filter.lp()', color: COLORS.orange },
-  { text: '<Audio />', color: COLORS.purple },
-  { text: 'gain: 0.7', color: COLORS.pink },
-  { text: 'loop(4)', color: COLORS.green },
-  { text: 'fx.delay()', color: COLORS.cyan },
-];
-
-export const HeroScene = memo(function HeroScene({ currentSection }: HeroSceneProps) {
-  const groupRef = useRef<THREE.Group>(null);
-  
-  useFrame(() => {
-    if (groupRef.current) {
-      // Smooth rotation based on section
-      const speeds = [0.001, 0.002, 0.0015, 0.001];
-      groupRef.current.rotation.y += speeds[currentSection];
-    }
-  });
-
-  const palette = SECTION_PALETTES[currentSection];
-
-  return (
-    <group ref={groupRef}>
-      <ambientLight intensity={0.1} />
-      <DynamicLights currentSection={currentSection} palette={palette} />
-      <CentralShape currentSection={currentSection} palette={palette} />
-      <FloatingCode currentSection={currentSection} />
-      <SpectrumRing currentSection={currentSection} palette={palette} />
-      <OrbitingElements currentSection={currentSection} palette={palette} />
-      <DynamicParticles currentSection={currentSection} palette={palette} />
-    </group>
-  );
-});
-
-// Dynamic lighting per section
-const DynamicLights = memo(function DynamicLights({ 
-  currentSection, 
-  palette 
-}: { 
-  currentSection: number; 
-  palette: typeof SECTION_PALETTES[0];
-}) {
-  const light1Ref = useRef<THREE.PointLight>(null);
-  const light2Ref = useRef<THREE.PointLight>(null);
-  const light3Ref = useRef<THREE.SpotLight>(null);
-
-  useFrame((state) => {
-    const t = state.clock.elapsedTime;
-    
-    if (light1Ref.current) {
-      light1Ref.current.position.x = Math.sin(t * 0.5) * 8;
-      light1Ref.current.position.y = Math.cos(t * 0.3) * 5;
-      light1Ref.current.color.set(palette.primary);
-      light1Ref.current.intensity = 0.6 + Math.sin(t * 2) * 0.2;
-    }
-    if (light2Ref.current) {
-      light2Ref.current.position.x = Math.cos(t * 0.4) * 10;
-      light2Ref.current.position.z = Math.sin(t * 0.6) * 8;
-      light2Ref.current.color.set(palette.secondary);
-      light2Ref.current.intensity = 0.4 + Math.cos(t * 1.5) * 0.15;
-    }
-    if (light3Ref.current) {
-      light3Ref.current.color.set(palette.accent);
-      light3Ref.current.intensity = 0.3;
-    }
-  });
-
+export const HeroScene = memo(function HeroScene({ currentSection, theme }: HeroSceneProps) {
   return (
     <>
-      <pointLight ref={light1Ref} position={[10, 10, 10]} />
-      <pointLight ref={light2Ref} position={[-10, -5, -10]} />
-      <spotLight ref={light3Ref} position={[0, 15, 0]} angle={0.5} penumbra={1} />
+      {/* Deep space starfield */}
+      <Starfield />
+      
+      {/* Cosmic fog for depth */}
+      <fog attach="fog" args={['#000000', 25, 60]} />
+      
+      {/* Dramatic lighting setup */}
+      <ambientLight intensity={0.15} />
+      <pointLight position={[10, 10, 10]} intensity={0.6} color="#ffffff" />
+      <pointLight position={[-8, -5, -8]} intensity={0.4} color={theme.primary} />
+      <pointLight position={[0, 5, -10]} intensity={0.3} color={theme.accent} />
+      
+      {/* Section-specific shapes */}
+      {currentSection === 0 && <HeroOrb theme={theme} />}
+      {currentSection === 1 && <CodeMatrix theme={theme} />}
+      {currentSection === 2 && <FeatureGrid theme={theme} />}
+      {currentSection === 3 && <PlayOrb theme={theme} />}
+      
+      {/* Orbital rings - always present */}
+      <OrbitalRings theme={theme} />
+      
+      {/* Floating particles */}
+      <CosmicDust theme={theme} />
     </>
   );
 });
 
+// Enhanced starfield with depth
+const Starfield = memo(function Starfield() {
+  const starsRef = useRef<THREE.Points>(null);
+  
+  const { positions, colors, sizes } = useMemo(() => {
+    const count = 2000;
+    const pos = new Float32Array(count * 3);
+    const col = new Float32Array(count * 3);
+    const siz = new Float32Array(count);
+    
+    for (let i = 0; i < count; i++) {
+      const radius = 30 + Math.random() * 50;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      
+      pos[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+      pos[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+      pos[i * 3 + 2] = radius * Math.cos(phi);
+      
+      // Varied star colors - some warm, some cool
+      const colorChoice = Math.random();
+      if (colorChoice > 0.9) {
+        // Warm stars
+        col[i * 3] = 1;
+        col[i * 3 + 1] = 0.8 + Math.random() * 0.2;
+        col[i * 3 + 2] = 0.6 + Math.random() * 0.2;
+      } else if (colorChoice > 0.8) {
+        // Blue stars
+        col[i * 3] = 0.7 + Math.random() * 0.2;
+        col[i * 3 + 1] = 0.8 + Math.random() * 0.2;
+        col[i * 3 + 2] = 1;
+      } else {
+        // White stars
+        const brightness = 0.5 + Math.random() * 0.5;
+        col[i * 3] = brightness;
+        col[i * 3 + 1] = brightness;
+        col[i * 3 + 2] = brightness;
+      }
+      
+      siz[i] = Math.random() * 0.08 + 0.02;
+    }
+    
+    return { positions: pos, colors: col, sizes: siz };
+  }, []);
 
-// Central morphing shape - different geometry per section
-const CentralShape = memo(function CentralShape({ 
-  currentSection, 
-  palette 
-}: { 
-  currentSection: number; 
-  palette: typeof SECTION_PALETTES[0];
-}) {
-  const meshRef = useRef<THREE.Points>(null);
-  const count = 3000; // More particles for richer visuals
-  const transitionProgress = useRef(0);
-  const prevSection = useRef(currentSection);
-
-  const positions = useMemo(() => new Float32Array(count * 3), []);
-  const colors = useMemo(() => new Float32Array(count * 3), []);
+  const geometry = useMemo(() => {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    geo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+    return geo;
+  }, [positions, colors, sizes]);
 
   useFrame((state) => {
-    if (!meshRef.current) return;
-    const t = state.clock.elapsedTime;
-    
-    // Smooth section transition
-    if (prevSection.current !== currentSection) {
-      transitionProgress.current = 0;
-      prevSection.current = currentSection;
+    if (starsRef.current) {
+      starsRef.current.rotation.y = state.clock.elapsedTime * 0.002;
+      starsRef.current.rotation.x = Math.sin(state.clock.elapsedTime * 0.001) * 0.1;
     }
-    transitionProgress.current = Math.min(1, transitionProgress.current + 0.02);
-    const ease = 1 - Math.pow(1 - transitionProgress.current, 3); // Ease out cubic
-
-    const posArray = meshRef.current.geometry.attributes.position.array as Float32Array;
-    const colArray = meshRef.current.geometry.attributes.color.array as Float32Array;
-    
-    const c1 = new THREE.Color(palette.primary);
-    const c2 = new THREE.Color(palette.secondary);
-    const c3 = new THREE.Color(palette.accent);
-
-    for (let i = 0; i < count; i++) {
-      const theta = (i / count) * Math.PI * 2 * 8;
-      const phi = Math.acos(2 * (i / count) - 1);
-      const idx = i * 3;
-      
-      let x = 0, y = 0, z = 0;
-
-      if (currentSection === 0) {
-        // Hero: Pulsing waveform sphere with audio-reactive feel
-        const wave = Math.sin(theta * 6 + t * 2) * 0.5 + Math.sin(phi * 4 + t * 3) * 0.3;
-        const r = (3 + wave) * (1 + Math.sin(t * 1.5) * 0.08);
-        x = r * Math.sin(phi) * Math.cos(theta + t * 0.15);
-        y = r * Math.sin(phi) * Math.sin(theta + t * 0.15);
-        z = r * Math.cos(phi);
-      } else if (currentSection === 1) {
-        // Code: Terminal/cube with glitch matrix effect
-        const cubeSize = 2.5;
-        const face = Math.floor((i / count) * 6);
-        const u = ((i * 7) % 100) / 100 - 0.5;
-        const v = ((i * 13) % 100) / 100 - 0.5;
-        
-        if (face === 0) { x = cubeSize; y = u * cubeSize * 2; z = v * cubeSize * 2; }
-        else if (face === 1) { x = -cubeSize; y = u * cubeSize * 2; z = v * cubeSize * 2; }
-        else if (face === 2) { y = cubeSize; x = u * cubeSize * 2; z = v * cubeSize * 2; }
-        else if (face === 3) { y = -cubeSize; x = u * cubeSize * 2; z = v * cubeSize * 2; }
-        else if (face === 4) { z = cubeSize; x = u * cubeSize * 2; y = v * cubeSize * 2; }
-        else { z = -cubeSize; x = u * cubeSize * 2; y = v * cubeSize * 2; }
-        
-        // Matrix rain effect
-        y += Math.sin(t * 3 + i * 0.1) * 0.1;
-        // Glitch
-        if (Math.random() < 0.005) x += (Math.random() - 0.5) * 0.8;
-      } else if (currentSection === 2) {
-        // Features: MASSIVE exploding DNA helix / sound wave spiral
-        const helixT = (i / count) * Math.PI * 8;
-        const helixRadius = 4 + Math.sin(helixT * 2 + t) * 0.8;
-        const strand = i % 2;
-        const phaseOffset = strand * Math.PI;
-        
-        // Double helix structure
-        x = Math.cos(helixT + phaseOffset + t * 0.5) * helixRadius;
-        z = Math.sin(helixT + phaseOffset + t * 0.5) * helixRadius;
-        y = ((i / count) - 0.5) * 12 + Math.sin(t * 2 + helixT) * 0.5;
-        
-        // Add connecting rungs between strands
-        if (i % 20 < 5) {
-          const rungProgress = (i % 20) / 5;
-          const baseAngle = helixT + t * 0.5;
-          x = Math.cos(baseAngle) * helixRadius * (1 - rungProgress) + 
-              Math.cos(baseAngle + Math.PI) * helixRadius * rungProgress;
-          z = Math.sin(baseAngle) * helixRadius * (1 - rungProgress) + 
-              Math.sin(baseAngle + Math.PI) * helixRadius * rungProgress;
-        }
-        
-        // Pulsing expansion
-        const pulse = 1 + Math.sin(t * 3) * 0.15;
-        x *= pulse;
-        z *= pulse;
-      } else {
-        // CTA: EPIC infinity symbol / möbius strip with particles flowing through
-        const mobT = theta * 2;
-        const scale = 5; // Much bigger
-        const twist = t * 0.3;
-        
-        // Möbius strip parametric equations
-        const halfT = mobT / 2 + twist;
-        const width = 1.5 + Math.sin(mobT * 4 + t * 2) * 0.3;
-        const s = ((i % 50) / 50 - 0.5) * width;
-        
-        // Figure-8 / infinity base path
-        const denom = 1 + Math.sin(mobT) * Math.sin(mobT);
-        const baseX = Math.cos(mobT) / denom * scale;
-        const baseZ = Math.sin(mobT) * Math.cos(mobT) / denom * scale;
-        
-        // Add twist and width
-        x = baseX + s * Math.cos(halfT) * Math.cos(mobT) * 0.5;
-        y = s * Math.sin(halfT) * 1.5 + Math.sin(t * 2 + mobT * 3) * 0.3;
-        z = baseZ + s * Math.cos(halfT) * Math.sin(mobT) * 0.5;
-        
-        // Flowing particle effect
-        const flow = (t * 2 + i * 0.01) % (Math.PI * 2);
-        x += Math.sin(flow) * 0.2;
-        z += Math.cos(flow) * 0.2;
-      }
-
-      // Apply transition easing
-      const prevX = posArray[idx] || 0;
-      const prevY = posArray[idx + 1] || 0;
-      const prevZ = posArray[idx + 2] || 0;
-      
-      posArray[idx] = THREE.MathUtils.lerp(prevX, x, ease * 0.1 + 0.02);
-      posArray[idx + 1] = THREE.MathUtils.lerp(prevY, y, ease * 0.1 + 0.02);
-      posArray[idx + 2] = THREE.MathUtils.lerp(prevZ, z, ease * 0.1 + 0.02);
-
-      // Dynamic color gradient based on position
-      const colorMix = (Math.sin(theta + t) + 1) / 2;
-      const color = i % 3 === 0 ? c1 : i % 3 === 1 ? c2 : c3;
-      colArray[idx] = THREE.MathUtils.lerp(c1.r, color.r, colorMix);
-      colArray[idx + 1] = THREE.MathUtils.lerp(c1.g, color.g, colorMix);
-      colArray[idx + 2] = THREE.MathUtils.lerp(c1.b, color.b, colorMix);
-    }
-    
-    meshRef.current.geometry.attributes.position.needsUpdate = true;
-    meshRef.current.geometry.attributes.color.needsUpdate = true;
   });
 
-  // Bigger particles for features and CTA sections
-  const particleSize = currentSection >= 2 ? 0.05 : 0.04;
-
   return (
-    <points ref={meshRef}>
-      <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
-        <bufferAttribute attach="attributes-color" args={[colors, 3]} />
-      </bufferGeometry>
-      <pointsMaterial size={particleSize} vertexColors transparent opacity={0.95} sizeAttenuation />
+    <points ref={starsRef} geometry={geometry}>
+      <pointsMaterial 
+        size={0.08} 
+        vertexColors 
+        transparent 
+        opacity={0.9} 
+        sizeAttenuation 
+        blending={THREE.AdditiveBlending}
+      />
     </points>
   );
 });
 
-// Floating code snippets
-const FloatingCode = memo(function FloatingCode({ currentSection }: { currentSection: number }) {
-  const groupRef = useRef<THREE.Group>(null);
+// Hero: Morphing organic orb with distortion
+const HeroOrb = memo(function HeroOrb({ theme }: { theme: SectionTheme }) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const glowRef = useRef<THREE.Mesh>(null);
+  
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    
+    if (meshRef.current) {
+      meshRef.current.rotation.x = t * 0.1;
+      meshRef.current.rotation.y = t * 0.15;
+    }
+    
+    if (glowRef.current) {
+      const scale = 1 + Math.sin(t * 2) * 0.05;
+      glowRef.current.scale.setScalar(scale * 4.5);
+    }
+  });
 
-  const snippetData = useMemo(() => {
-    return CODE_SNIPPETS.map((_, i) => ({
-      baseAngle: (i / CODE_SNIPPETS.length) * Math.PI * 2,
-      baseRadius: 5 + (i % 3) * 1.2,
-      baseY: (Math.random() - 0.5) * 3,
-      floatSpeed: 0.8 + Math.random() * 0.5,
-    }));
+  return (
+    <Float speed={2} rotationIntensity={0.5} floatIntensity={1}>
+      <group position={[3, 0, -2]}>
+        {/* Outer glow */}
+        <mesh ref={glowRef}>
+          <sphereGeometry args={[1, 32, 32]} />
+          <meshBasicMaterial 
+            color={theme.primary} 
+            transparent 
+            opacity={0.08}
+            blending={THREE.AdditiveBlending}
+          />
+        </mesh>
+        
+        {/* Main distorted sphere */}
+        <mesh ref={meshRef}>
+          <icosahedronGeometry args={[2.5, 20]} />
+          <MeshDistortMaterial
+            color={theme.primary}
+            emissive={theme.primary}
+            emissiveIntensity={0.3}
+            metalness={0.8}
+            roughness={0.2}
+            distort={0.4}
+            speed={2}
+          />
+        </mesh>
+        
+        {/* Inner core */}
+        <mesh>
+          <sphereGeometry args={[1.2, 32, 32]} />
+          <meshBasicMaterial 
+            color={theme.accent} 
+            transparent 
+            opacity={0.6}
+          />
+        </mesh>
+        
+        {/* Wireframe overlay */}
+        <mesh>
+          <icosahedronGeometry args={[2.8, 3]} />
+          <meshBasicMaterial 
+            color={theme.primary} 
+            wireframe 
+            transparent 
+            opacity={0.15}
+          />
+        </mesh>
+      </group>
+    </Float>
+  );
+});
+
+// Code section: Matrix-style floating code blocks
+const CodeMatrix = memo(function CodeMatrix({ theme }: { theme: SectionTheme }) {
+  const groupRef = useRef<THREE.Group>(null);
+  const blocksRef = useRef<THREE.Mesh[]>([]);
+  
+  const blocks = useMemo(() => {
+    const items = [];
+    for (let i = 0; i < 30; i++) {
+      items.push({
+        position: [
+          (Math.random() - 0.5) * 12,
+          (Math.random() - 0.5) * 8,
+          (Math.random() - 0.5) * 8 - 2,
+        ] as [number, number, number],
+        scale: 0.3 + Math.random() * 0.5,
+        speed: 0.5 + Math.random() * 1.5,
+        offset: Math.random() * Math.PI * 2,
+      });
+    }
+    return items;
   }, []);
 
   useFrame((state) => {
-    if (!groupRef.current) return;
     const t = state.clock.elapsedTime;
-
-    groupRef.current.children.forEach((child, i) => {
-      const data = snippetData[i];
-      
-      // Section-based behavior
-      let radius = data.baseRadius;
-      let opacity = 0.5;
-      let scale = 0.8;
-      let rotSpeed = 0.08;
-
-      switch (currentSection) {
-        case 0:
-          radius = data.baseRadius;
-          opacity = 0.6;
-          scale = 0.9;
-          break;
-        case 1:
-          // Code section: expand and highlight
-          radius = data.baseRadius + 2;
-          opacity = 0.95;
-          scale = 1.2;
-          break;
-        case 2:
-          // Features: spread out wide, visible
-          radius = data.baseRadius + 3;
-          opacity = 0.7;
-          scale = 1;
-          rotSpeed = 0.12;
-          break;
-        default:
-          // CTA: elegant orbit
-          radius = data.baseRadius + 1;
-          opacity = 0.8;
-          scale = 1.1;
-          rotSpeed = 0.06;
-      }
-
-      const angle = data.baseAngle + t * rotSpeed;
-      child.position.x = Math.cos(angle) * radius;
-      child.position.z = Math.sin(angle) * radius;
-      child.position.y = data.baseY + Math.sin(t * data.floatSpeed + i) * 0.4;
-      
-      child.lookAt(0, child.position.y, 0);
-      child.rotateY(Math.PI);
-      child.scale.setScalar(scale);
-      
-      const mesh = child as THREE.Mesh;
-      if (mesh.material && 'opacity' in mesh.material) {
-        (mesh.material as THREE.MeshBasicMaterial).opacity = opacity;
+    
+    if (groupRef.current) {
+      groupRef.current.rotation.y = Math.sin(t * 0.1) * 0.1;
+    }
+    
+    blocksRef.current.forEach((block, i) => {
+      if (block) {
+        const data = blocks[i];
+        block.position.y = data.position[1] + Math.sin(t * data.speed + data.offset) * 0.5;
+        block.rotation.x = t * 0.2;
+        block.rotation.y = t * 0.3;
       }
     });
   });
 
   return (
     <group ref={groupRef}>
-      {CODE_SNIPPETS.map((snippet, i) => (
-        <Text
+      {blocks.map((block, i) => (
+        <mesh
           key={i}
-          fontSize={0.35}
-          color={snippet.color}
-          anchorX="center"
-          anchorY="middle"
-          material-transparent
-          material-opacity={0.6}
+          ref={(el) => { if (el) blocksRef.current[i] = el; }}
+          position={block.position}
+          scale={block.scale}
         >
-          {snippet.text}
-        </Text>
-      ))}
-    </group>
-  );
-});
-
-// Spectrum ring visualizer
-const SpectrumRing = memo(function SpectrumRing({ 
-  currentSection, 
-  palette 
-}: { 
-  currentSection: number; 
-  palette: typeof SECTION_PALETTES[0];
-}) {
-  const barsRef = useRef<THREE.Group>(null);
-  const barCount = 80;
-
-  const bars = useMemo(() => {
-    return Array.from({ length: barCount }, (_, i) => ({
-      angle: (i / barCount) * Math.PI * 2,
-      speed: 2 + Math.random() * 2,
-      phase: Math.random() * Math.PI * 2,
-    }));
-  }, []);
-
-  useFrame((state) => {
-    if (!barsRef.current) return;
-    const t = state.clock.elapsedTime;
-
-    // Section-based visibility and intensity
-    let baseRadius = 3.5;
-    let heightMult = 1;
-    let groupOpacity = 0.6;
-    let yOffset = -2;
-    let rotationSpeed = 0.08;
-
-    if (currentSection === 0) {
-      heightMult = 0.6;
-      groupOpacity = 0.5;
-    } else if (currentSection === 1) {
-      heightMult = 0.4;
-      groupOpacity = 0.3;
-      yOffset = -3;
-    } else if (currentSection === 2) {
-      // Features: subtle accent ring, not overwhelming
-      baseRadius = 5;
-      heightMult = 0.8;
-      groupOpacity = 0.5;
-      yOffset = -3;
-      rotationSpeed = 0.1;
-    } else {
-      // CTA: minimal, elegant surrounding
-      baseRadius = 5.5;
-      heightMult = 0.6;
-      groupOpacity = 0.4;
-      yOffset = -3;
-      rotationSpeed = 0.05;
-    }
-
-    barsRef.current.position.y = yOffset;
-
-    barsRef.current.children.forEach((bar, i) => {
-      const { angle, speed, phase } = bars[i];
-      
-      const audioSim = Math.abs(Math.sin(t * speed + phase)) + 
-                       Math.abs(Math.sin(t * speed * 0.6 + phase * 1.3)) * 0.4 +
-                       Math.abs(Math.cos(t * speed * 0.3 + i * 0.1)) * 0.3;
-      const height = (0.2 + audioSim * 1.5) * heightMult;
-      
-      bar.scale.y = height;
-      bar.position.y = height / 2;
-      
-      const currentAngle = angle + t * rotationSpeed;
-      bar.position.x = Math.cos(currentAngle) * baseRadius;
-      bar.position.z = Math.sin(currentAngle) * baseRadius;
-      bar.rotation.y = -currentAngle;
-
-      const material = (bar as THREE.Mesh).material as THREE.MeshStandardMaterial;
-      material.opacity = groupOpacity;
-      material.emissiveIntensity = 0.3;
-    });
-  });
-
-  const barColors = useMemo(() => {
-    return bars.map((_, i) => {
-      const colors = [palette.primary, palette.secondary, palette.accent];
-      return colors[i % 3];
-    });
-  }, [bars, palette]);
-
-  return (
-    <group ref={barsRef}>
-      {bars.map((_, i) => (
-        <mesh key={i}>
-          <boxGeometry args={[0.08, 1, 0.04]} />
+          <boxGeometry args={[1, 0.6, 0.1]} />
           <meshStandardMaterial
-            color={barColors[i]}
-            emissive={barColors[i]}
+            color={i % 3 === 0 ? theme.primary : i % 3 === 1 ? theme.accent : '#ffffff'}
+            emissive={i % 3 === 0 ? theme.primary : i % 3 === 1 ? theme.accent : '#ffffff'}
             emissiveIntensity={0.3}
             metalness={0.9}
             roughness={0.1}
             transparent
-            opacity={0.6}
+            opacity={0.8}
           />
         </mesh>
       ))}
+      
+      {/* Central bracket structure */}
+      <Float speed={1.5} rotationIntensity={0.3}>
+        <group position={[0, 0, 0]}>
+          {/* Left bracket */}
+          <mesh position={[-2, 0, 0]}>
+            <boxGeometry args={[0.15, 4, 0.15]} />
+            <meshStandardMaterial 
+              color={theme.primary} 
+              emissive={theme.primary} 
+              emissiveIntensity={0.5}
+            />
+          </mesh>
+          <mesh position={[-1.5, 1.9, 0]}>
+            <boxGeometry args={[1, 0.15, 0.15]} />
+            <meshStandardMaterial 
+              color={theme.primary} 
+              emissive={theme.primary} 
+              emissiveIntensity={0.5}
+            />
+          </mesh>
+          <mesh position={[-1.5, -1.9, 0]}>
+            <boxGeometry args={[1, 0.15, 0.15]} />
+            <meshStandardMaterial 
+              color={theme.primary} 
+              emissive={theme.primary} 
+              emissiveIntensity={0.5}
+            />
+          </mesh>
+          
+          {/* Right bracket */}
+          <mesh position={[2, 0, 0]}>
+            <boxGeometry args={[0.15, 4, 0.15]} />
+            <meshStandardMaterial 
+              color={theme.primary} 
+              emissive={theme.primary} 
+              emissiveIntensity={0.5}
+            />
+          </mesh>
+          <mesh position={[1.5, 1.9, 0]}>
+            <boxGeometry args={[1, 0.15, 0.15]} />
+            <meshStandardMaterial 
+              color={theme.primary} 
+              emissive={theme.primary} 
+              emissiveIntensity={0.5}
+            />
+          </mesh>
+          <mesh position={[1.5, -1.9, 0]}>
+            <boxGeometry args={[1, 0.15, 0.15]} />
+            <meshStandardMaterial 
+              color={theme.primary} 
+              emissive={theme.primary} 
+              emissiveIntensity={0.5}
+            />
+          </mesh>
+        </group>
+      </Float>
     </group>
   );
 });
 
-// Orbiting code brackets and symbols
-const OrbitingElements = memo(function OrbitingElements({ 
-  currentSection, 
-  palette 
-}: { 
-  currentSection: number; 
-  palette: typeof SECTION_PALETTES[0];
-}) {
+// Features: 3D grid of floating feature icons
+const FeatureGrid = memo(function FeatureGrid({ theme }: { theme: SectionTheme }) {
   const groupRef = useRef<THREE.Group>(null);
-
-  const elements = useMemo(() => [
-    { text: '{', color: palette.secondary, radius: 4.5, speed: 0.3, yOffset: 1.5 },
-    { text: '}', color: palette.secondary, radius: 4.5, speed: 0.3, yOffset: -1.5 },
-    { text: '</', color: palette.accent, radius: 5, speed: -0.25, yOffset: 0 },
-    { text: '>', color: palette.accent, radius: 5, speed: -0.25, yOffset: 0.5 },
-    { text: '()', color: palette.primary, radius: 5.5, speed: 0.2, yOffset: -1 },
-    { text: '=>', color: palette.primary, radius: 4, speed: -0.35, yOffset: 2 },
-  ], [palette]);
+  const itemsRef = useRef<THREE.Mesh[]>([]);
+  
+  const gridItems = useMemo(() => {
+    const items = [];
+    const cols = 5;
+    const rows = 3;
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        items.push({
+          position: [
+            (col - (cols - 1) / 2) * 2.5,
+            (row - (rows - 1) / 2) * 2,
+            0,
+          ] as [number, number, number],
+          delay: (row * cols + col) * 0.1,
+        });
+      }
+    }
+    return items;
+  }, []);
 
   useFrame((state) => {
-    if (!groupRef.current) return;
     const t = state.clock.elapsedTime;
-
-    // Section-based spread
-    let spread = 1;
-    let opacity = 0.5;
-    let fontSize = 0.8;
-
-    if (currentSection === 1) {
-      spread = 1.3;
-      opacity = 0.9;
-      fontSize = 1;
-    } else if (currentSection === 2) {
-      // Features: bigger, more spread
-      spread = 1.6;
-      opacity = 0.85;
-      fontSize = 1.2;
-    } else if (currentSection === 3) {
-      // CTA: elegant surrounding
-      spread = 1.4;
-      opacity = 0.9;
-      fontSize = 1.1;
+    
+    if (groupRef.current) {
+      groupRef.current.rotation.x = -0.2;
+      groupRef.current.rotation.y = Math.sin(t * 0.2) * 0.1;
     }
-
-    groupRef.current.children.forEach((child, i) => {
-      const el = elements[i];
-      const angle = t * el.speed + (i * Math.PI) / 3;
-      
-      child.position.x = Math.cos(angle) * el.radius * spread;
-      child.position.z = Math.sin(angle) * el.radius * spread;
-      child.position.y = el.yOffset * spread + Math.sin(t + i) * 0.3;
-      
-      child.lookAt(0, child.position.y, 0);
-      child.rotateY(Math.PI);
-      child.scale.setScalar(fontSize);
-
-      const mesh = child as THREE.Mesh;
-      if (mesh.material && 'opacity' in mesh.material) {
-        (mesh.material as THREE.MeshBasicMaterial).opacity = opacity;
+    
+    itemsRef.current.forEach((item, i) => {
+      if (item) {
+        const wave = Math.sin(t * 2 + gridItems[i].delay * 5);
+        item.scale.setScalar(0.8 + wave * 0.2);
+        item.position.z = wave * 0.3;
       }
     });
   });
 
   return (
-    <group ref={groupRef}>
-      {elements.map((el, i) => (
-        <Text
+    <group ref={groupRef} position={[0, 0, -3]}>
+      {gridItems.map((item, i) => (
+        <mesh
           key={i}
-          fontSize={0.8}
-          color={el.color}
-          anchorX="center"
-          anchorY="middle"
-          material-transparent
-          material-opacity={0.5}
+          ref={(el) => { if (el) itemsRef.current[i] = el; }}
+          position={item.position}
         >
-          {el.text}
-        </Text>
+          <octahedronGeometry args={[0.5, 0]} />
+          <MeshWobbleMaterial
+            color={i % 2 === 0 ? theme.primary : theme.accent}
+            emissive={i % 2 === 0 ? theme.primary : theme.accent}
+            emissiveIntensity={0.4}
+            metalness={0.7}
+            roughness={0.2}
+            factor={0.3}
+            speed={2}
+          />
+        </mesh>
       ))}
+      
+      {/* Connecting lines */}
+      <mesh position={[0, 0, -0.5]}>
+        <planeGeometry args={[14, 8]} />
+        <meshBasicMaterial 
+          color={theme.primary} 
+          transparent 
+          opacity={0.03}
+          wireframe
+        />
+      </mesh>
     </group>
   );
 });
 
-// Dynamic sparkle particles
-const DynamicParticles = memo(function DynamicParticles({ 
-  currentSection, 
-  palette 
-}: { 
-  currentSection: number; 
-  palette: typeof SECTION_PALETTES[0];
-}) {
-  const configs = [
-    { count: 80, size: 1.2, speed: 0.1, scale: 18 },
-    { count: 100, size: 0.8, speed: 0.15, scale: 15 },
-    { count: 200, size: 2, speed: 0.25, scale: 25 },    // Features: MORE particles, BIGGER
-    { count: 150, size: 1.8, speed: 0.15, scale: 22 },  // CTA: Elegant but prominent
-  ];
+// CTA: Pulsing play orb with energy rings
+const PlayOrb = memo(function PlayOrb({ theme }: { theme: SectionTheme }) {
+  const groupRef = useRef<THREE.Group>(null);
+  const ringsRef = useRef<THREE.Mesh[]>([]);
+  const coreRef = useRef<THREE.Mesh>(null);
   
-  const config = configs[currentSection];
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    
+    if (groupRef.current) {
+      groupRef.current.rotation.y = t * 0.1;
+    }
+    
+    if (coreRef.current) {
+      const pulse = 1 + Math.sin(t * 3) * 0.1;
+      coreRef.current.scale.setScalar(pulse);
+    }
+    
+    ringsRef.current.forEach((ring, i) => {
+      if (ring) {
+        ring.rotation.x = t * (0.3 + i * 0.1);
+        ring.rotation.z = t * (0.2 - i * 0.05);
+        const scale = 1 + Math.sin(t * 2 + i) * 0.1;
+        ring.scale.setScalar(scale);
+      }
+    });
+  });
+
+  return (
+    <Float speed={1.5} rotationIntensity={0.2} floatIntensity={0.5}>
+      <group ref={groupRef}>
+        {/* Core sphere */}
+        <mesh ref={coreRef}>
+          <sphereGeometry args={[1.5, 32, 32]} />
+          <MeshDistortMaterial
+            color={theme.primary}
+            emissive={theme.primary}
+            emissiveIntensity={0.5}
+            metalness={0.9}
+            roughness={0.1}
+            distort={0.2}
+            speed={3}
+          />
+        </mesh>
+        
+        {/* Play triangle */}
+        <mesh rotation={[0, 0, -Math.PI / 2]} position={[0.3, 0, 0]}>
+          <coneGeometry args={[0.8, 1.4, 3]} />
+          <meshBasicMaterial color="#ffffff" />
+        </mesh>
+        
+        {/* Energy rings */}
+        {[0, 1, 2].map((i) => (
+          <mesh 
+            key={i}
+            ref={(el) => { if (el) ringsRef.current[i] = el; }}
+          >
+            <torusGeometry args={[2.5 + i * 0.8, 0.03, 16, 64]} />
+            <meshBasicMaterial 
+              color={theme.primary} 
+              transparent 
+              opacity={0.4 - i * 0.1}
+              blending={THREE.AdditiveBlending}
+            />
+          </mesh>
+        ))}
+        
+        {/* Outer glow */}
+        <mesh>
+          <sphereGeometry args={[4, 32, 32]} />
+          <meshBasicMaterial 
+            color={theme.primary} 
+            transparent 
+            opacity={0.05}
+            blending={THREE.AdditiveBlending}
+          />
+        </mesh>
+      </group>
+    </Float>
+  );
+});
+
+// Enhanced orbital rings
+const OrbitalRings = memo(function OrbitalRings({ theme }: { theme: SectionTheme }) {
+  const group1Ref = useRef<THREE.Group>(null);
+  const group2Ref = useRef<THREE.Group>(null);
+  const group3Ref = useRef<THREE.Group>(null);
+  
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    
+    if (group1Ref.current) {
+      group1Ref.current.rotation.x = t * 0.05;
+      group1Ref.current.rotation.y = t * 0.03;
+    }
+    if (group2Ref.current) {
+      group2Ref.current.rotation.x = t * 0.04;
+      group2Ref.current.rotation.z = t * 0.035;
+    }
+    if (group3Ref.current) {
+      group3Ref.current.rotation.y = t * 0.025;
+      group3Ref.current.rotation.z = t * 0.02;
+    }
+  });
 
   return (
     <>
-      <Sparkles 
-        count={config.count} 
-        scale={config.scale} 
-        size={config.size} 
-        speed={config.speed} 
-        color={palette.primary} 
-        opacity={currentSection >= 2 ? 0.7 : 0.5} 
-      />
-      <Sparkles 
-        count={config.count / 2} 
-        scale={config.scale * 0.8} 
-        size={config.size * 0.7} 
-        speed={config.speed * 0.7} 
-        color={palette.secondary} 
-        opacity={currentSection >= 2 ? 0.5 : 0.3} 
-      />
-      {/* Extra layer for features and CTA */}
-      {currentSection >= 2 && (
-        <Sparkles 
-          count={config.count / 3} 
-          scale={config.scale * 1.2} 
-          size={config.size * 0.5} 
-          speed={config.speed * 1.5} 
-          color={palette.accent} 
-          opacity={0.4} 
-        />
-      )}
+      <group ref={group1Ref}>
+        <mesh rotation={[Math.PI / 3, 0, 0]}>
+          <torusGeometry args={[9, 0.02, 16, 100]} />
+          <meshBasicMaterial 
+            color={theme.primary} 
+            transparent 
+            opacity={0.2}
+            blending={THREE.AdditiveBlending}
+          />
+        </mesh>
+      </group>
+      
+      <group ref={group2Ref}>
+        <mesh rotation={[Math.PI / 2, Math.PI / 4, 0]}>
+          <torusGeometry args={[11, 0.015, 16, 100]} />
+          <meshBasicMaterial 
+            color={theme.secondary} 
+            transparent 
+            opacity={0.12}
+            blending={THREE.AdditiveBlending}
+          />
+        </mesh>
+      </group>
+      
+      <group ref={group3Ref}>
+        <mesh rotation={[Math.PI / 4, 0, Math.PI / 3]}>
+          <torusGeometry args={[13, 0.01, 16, 100]} />
+          <meshBasicMaterial 
+            color={theme.accent} 
+            transparent 
+            opacity={0.08}
+            blending={THREE.AdditiveBlending}
+          />
+        </mesh>
+      </group>
     </>
+  );
+});
+
+// Enhanced cosmic dust
+const CosmicDust = memo(function CosmicDust({ theme }: { theme: SectionTheme }) {
+  const pointsRef = useRef<THREE.Points>(null);
+  
+  const particles = useMemo(() => {
+    const count = 300;
+    const positions = new Float32Array(count * 3);
+    const colors = new Float32Array(count * 3);
+    
+    const color1 = new THREE.Color(theme.primary);
+    const color2 = new THREE.Color(theme.accent);
+    
+    for (let i = 0; i < count; i++) {
+      const radius = 6 + Math.random() * 15;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      
+      positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+      positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+      positions[i * 3 + 2] = radius * Math.cos(phi);
+      
+      const mixFactor = Math.random();
+      const mixedColor = color1.clone().lerp(color2, mixFactor);
+      colors[i * 3] = mixedColor.r;
+      colors[i * 3 + 1] = mixedColor.g;
+      colors[i * 3 + 2] = mixedColor.b;
+    }
+    
+    return { positions, colors };
+  }, [theme.primary, theme.accent]);
+
+  const geometry = useMemo(() => {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(particles.positions, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(particles.colors, 3));
+    return geo;
+  }, [particles]);
+
+  useFrame((state) => {
+    if (!pointsRef.current) return;
+    const t = state.clock.elapsedTime;
+    
+    pointsRef.current.rotation.y = t * 0.01;
+    pointsRef.current.rotation.x = t * 0.005;
+  });
+
+  return (
+    <points ref={pointsRef} geometry={geometry}>
+      <pointsMaterial 
+        size={0.06} 
+        vertexColors 
+        transparent 
+        opacity={0.6} 
+        sizeAttenuation
+        blending={THREE.AdditiveBlending}
+      />
+    </points>
   );
 });

@@ -120,7 +120,7 @@ export class AudioEngine {
     }
 
     public getDeck(id: string): Deck | undefined {
-        return this.decks.get(id);
+        return this.decks?.get(id);
     }
 
     public async loadTrack(deckId: string, file: File): Promise<void> {
